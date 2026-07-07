@@ -333,16 +333,161 @@ dpkg -l | grep <name>           # check if a specific package is installed
 
 ---
 
-## Key Takeaways — Sections 1-4
+## 7. Linux Networking & Network Configuration
+
+### Linux Networking Overview
+
+One of the primary tasks of Linux networking is managing network interfaces — this involves assigning IP addresses, configuring network devices such as routers and switches, and setting up various network protocols including TCP/IP.
+
+```bash
+ip a                            # show all network interfaces and IP addresses
+ip r                            # show routing table
+ip link show                    # show network interface status
+ifconfig                        # older alternative to ip a
+```
+
+### Configuring Network Interfaces
+
+```bash
+ifconfig eth0 192.168.1.100 netmask 255.255.255.0    # set IP (temporary)
+ip addr add 192.168.1.100/24 dev eth0                # set IP using ip command
+ip link set eth0 up                                   # bring interface up
+ip link set eth0 down                                 # bring interface down
+```
+
+**DNS configuration:**
+
+```bash
+cat /etc/resolv.conf            # show current DNS servers
+cat /etc/hosts                  # local hostname to IP mappings
+```
+
+Updating DNS settings is done by editing `/etc/resolv.conf` or updating via `systemd-resolved`. Restarting the networking service applies changes:
+
+```bash
+systemctl restart networking    # Debian/Ubuntu
+systemctl restart NetworkManager # modern systems
+```
+
+---
+
+### Network Access Control
+
+Network access control determines who can access what on the network. There are three primary models:
+
+| Model    | Full Name                    | Controlled By                                        |
+| -------- | ---------------------------- | ---------------------------------------------------- |
+| **DAC**  | Discretionary Access Control | The resource owner — owner decides who can access    |
+| **MAC**  | Mandatory Access Control     | The operating system — enforced by policy, not owner |
+| **RBAC** | Role-Based Access Control    | Roles assigned to users — access based on role       |
+
+**Permission-based enforcement tools:**
+
+| Tool          | Purpose                                                          |
+| ------------- | ---------------------------------------------------------------- |
+| `syslog`      | System logging daemon                                            |
+| `rsyslog`     | Enhanced syslog with filtering and remote logging                |
+| `ss`          | Modern socket statistics tool                                    |
+| **ELK Stack** | Elasticsearch + Logstash + Kibana — log aggregation and analysis |
+
+```bash
+ss -tln                         # show listening TCP ports
+ss -tulnp                       # show all listening sockets with process info
+```
+
+---
+
+### Network Monitoring
+
+Network monitoring involves capturing, analysing, and interpreting network traffic to identify security threats, performance issues, and suspicious behaviour.
+
+```bash
+tcpdump -i eth0                 # capture traffic on eth0
+tcpdump -i eth0 port 80         # capture only HTTP traffic
+tcpdump -w capture.pcap         # write capture to file
+wireshark                       # GUI packet analyser
+netstat -tlnp                   # show listening ports with processes (older)
+ss -tulnp                       # modern alternative to netstat
+```
+
+---
+
+### Troubleshooting Network Connectivity
+
+Troubleshooting is an essential process that involves diagnosing and resolving network issues that can adversely affect the performance and reliability of the network.
+
+```bash
+ping <host>                     # test basic connectivity
+traceroute <host>               # trace the network path to a host
+nmap -sn <ip-range>             # ping sweep to discover live hosts
+dig <domain>                    # detailed DNS lookup
+nslookup <domain>               # simple DNS lookup
+curl -I http://<host>           # check HTTP response headers
+```
+
+**Key troubleshooting tools:**
+
+| Tool         | Purpose                                                |
+| ------------ | ------------------------------------------------------ |
+| `ping`       | Test basic connectivity                                |
+| `netstat`    | Display active network connections and listening ports |
+| `traceroute` | Trace the path packets take to reach a host            |
+| `tcpdump`    | Capture and analyse packets at the command line        |
+| `wireshark`  | GUI packet analyser                                    |
+| `nmap`       | Network discovery and port scanning                    |
+
+**`netstat` specifically:**
+
+- Displays active network connections and their associated ports
+- Can be used to identify network traffic and troubleshoot connectivity
+- Modern replacement: `ss -tulnp`
+
+---
+
+### Secure Shell (SSH)
+
+SSH (Secure Shell) is a network protocol that allows the secure transmission of data and commands over a network. It is the standard way to remotely manage Linux systems.
+
+```bash
+ssh user@<ip>                           # connect to remote host
+ssh -p 2222 user@<ip>                   # connect on non-standard port
+ssh -i key.pem user@<ip>                # connect using a private key
+ssh -L 8080:localhost:80 user@<ip>      # local port forwarding
+ssh -D 9050 user@<ip>                   # dynamic SOCKS proxy
+```
+
+**Why SSH matters for CTF/pentest:**
+
+- SSH keys found on a compromised machine can grant access to other hosts
+- Port forwarding via SSH is used to pivot through networks and access internal services
+- Always check `~/.ssh/` for private keys, `authorized_keys`, and `known_hosts` after gaining access
+
+---
+
+### Network File System (NFS) — Networking Perspective
+
+NFS allows remote systems to share files over a network as if they were local. From a networking standpoint, it operates over TCP/UDP and is managed via `mount`.
+
+```bash
+showmount -e <ip>               # enumerate available NFS shares
+mount -t nfs <ip>:/share /mnt   # mount a remote NFS share locally
+```
+
+---
+
+## Key Takeaways — Sections 1-5
 
 - The shell is the primary interface for Linux — fluency here is non-negotiable for CTF work
 - SSH is the standard way to connect to remote Linux machines (`ssh user@ip`)
 - File permissions are a fundamental attack surface — misconfigurations lead directly to privilege escalation
 - Always check SUID binaries and writable files early in post-exploitation enumeration
-- Inodes store metadata about files, not the data itself — understanding this helps when investigating file system anomalies
+- Inodes store metadata about files, not the data itself
 - NFS misconfiguration is a classic privilege escalation and lateral movement vector
 - `grep`, `find`, and pipes are the most-used tools during enumeration — master them early
 - Symlinks pointing to sensitive files and writable `/tmp` symlink attacks are classic CTF privesc techniques
-- Always check `lsblk`, `fdisk -l`, and `/etc/fstab` after gaining a foothold — unmounted partitions may contain sensitive data
+- Always check `lsblk`, `fdisk -l`, and `/etc/fstab` after gaining a foothold
 - Docker group membership is equivalent to root — always check `id` immediately after gaining a shell
 - Check installed package versions with `dpkg -l` — outdated packages with known CVEs are a common attack path
+- `ss -tulnp` is the modern replacement for `netstat -tlnp` — shows listening ports with process info
+- Always check `~/.ssh/` after gaining access — private keys can unlock lateral movement across hosts
+- SSH port forwarding is essential for pivoting through internal networks during CTF and real engagements
