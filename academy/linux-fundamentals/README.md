@@ -710,3 +710,11 @@ cat /etc/os-release
 - ZFS (Solaris) vs ext4/Btrfs (Linux) — know the difference when you encounter Solaris in CTF or enterprise environments
 
 ---
+
+## Resources
+
+- [HackTheBox Academy — Linux Fundamentals](https://academy.hackthebox.com/module/details/18)
+- [GTFOBins](https://gtfobins.github.io) — SUID/sudo binary abuse reference
+- [Linux Privilege Escalation Guide](https://book.hacktricks.xyz/linux-hardening/privilege-escalation)
+- [iptables documentation](https://netfilter.org/documentation/)
+- [SELinux User Guide](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/using_selinux/index)
