@@ -2,7 +2,8 @@
 
 **Module:** Linux Fundamentals
 **Platform:** HackTheBox Academy
-**Status:** 🟡 In progress
+**Status:** ✅ Completed
+**Sections:** 30 sections · 21 Interactive
 
 ---
 
@@ -12,115 +13,81 @@ Linux Fundamentals covers the core concepts needed to navigate, manage, and unde
 
 ---
 
-## File System Navigation
+## 1. Introduction & The Shell
+
+Linux is one of the most widely used operating systems in the world, particularly in servers, cloud infrastructure, and security tooling. One of the best ways to learn Linux is to experiment with it hands-on — not just read about it.
+
+**Connecting to a remote Linux machine:**
 
 ```bash
-ls -la          # list all files including hidden, with permissions and metadata
-cd /path        # change directory
-pwd             # print working directory
-find / -name "filename" 2>/dev/null   # search filesystem, suppress permission errors
+ssh htb-student@<ip-address>
 ```
 
-**Key concepts:**
+The shell is the primary interface for interacting with a Linux system. It interprets commands and passes them to the operating system for execution. Common shells include `bash` (Bourne Again Shell), `zsh`, and `sh`.
 
-- Everything in Linux is a file — devices, sockets, pipes
-- Hidden files start with a `.` (dot)
-- `-la` flags: `-l` for long format (permissions, owner, size), `-a` for all including hidden
+**Basic navigation:**
+
+```bash
+pwd             # print working directory — where you currently are
+ls -la          # list all files including hidden, with permissions and metadata
+cd /path        # change to a specific directory
+cd ..           # go up one directory
+cd ~            # go to home directory
+```
 
 ---
 
-## File Permissions
+## 2. File Permissions
 
-| Position | Meaning                                          |
-| -------- | ------------------------------------------------ |
-| `-`      | File type (`-` file, `d` directory, `l` symlink) |
-| `rwx`    | Owner permissions (read, write, execute)         |
-| `r-x`    | Group permissions                                |
-| `r--`    | Other permissions                                |
+Every file and directory in Linux has associated permissions that control who can read, write, or execute it. Understanding permissions is critical — misconfigurations are one of the most common privilege escalation vectors in CTFs and real environments.
+
+**Permission format:**
+
+-rwxr-xr-- 1 owner group size date filename
+| Position | Meaning |
+|---|---|
+| `-` | File type (`-` regular file, `d` directory, `l` symbolic link) |
+| `rwx` | Owner permissions (read, write, execute) |
+| `r-x` | Group permissions |
+| `r--` | Other/world permissions |
+
+**Reading the permission string:**
+
+- Each permission group has 3 characters: `r` (read=4), `w` (write=2), `x` (execute=1)
+- The number after permissions (e.g. `1` or `2`) is the **hard link count**
+- A directory with 2 hard links means it has `.` (itself) and `..` (parent) as minimum entries
 
 **Changing permissions:**
 
 ```bash
-chmod 755 file      # owner: rwx, group: r-x, other: r-x
-chmod +x file       # add execute for all
-chown user:group file  # change owner and group
+chmod 755 file        # owner: rwx (7), group: r-x (5), other: r-x (5)
+chmod +x file         # add execute permission for all
+chmod u+w file        # add write permission for owner only
+chown user:group file # change owner and group
+chown user file       # change owner only
 ```
 
----
+**Octal permission reference:**
 
-## Process and Service Management
-
-```bash
-ps aux              # list all running processes
-ss -tln             # list all listening TCP sockets (ports)
-systemctl status <service>   # check service status
-systemctl list-units --type=service  # list all services
-```
-
-**Key concepts:**
-
-- `ss -tln` is the modern replacement for `netstat -tlnp`
-- Services running locally (127.0.0.1) won't show in external scans — always check internally
-- `systemctl` manages systemd services — the init system on most modern Linux distros
-
----
-
-## File Search and Discovery
-
-```bash
-find / -type f -name "*.conf" 2>/dev/null     # find all config files
-find / -perm -4000 2>/dev/null                # find SUID binaries (privesc vector)
-find / -writable -type f 2>/dev/null          # find writable files
-grep -r "password" /etc/ 2>/dev/null          # search for strings recursively
-```
+| Octal | Binary | Permissions |
+| ----- | ------ | ----------- |
+| 7     | 111    | rwx         |
+| 6     | 110    | rw-         |
+| 5     | 101    | r-x         |
+| 4     | 100    | r--         |
+| 0     | 000    | ---         |
 
 **Why this matters for CTF/pentest:**
 
-- Config files often contain credentials
-- SUID binaries are a common privilege escalation vector
-- Writable files in sensitive locations can be abused
+- World-writable files (`-rw-rw-rw-`) can be modified by any user
+- SUID bit (`-rwsr-xr-x`) means the file runs as the owner — if owned by root, this is a privesc vector
+- Finding SUID binaries: `find / -perm -4000 2>/dev/null`
 
 ---
 
-## User and Group Management
+## Key Takeaways — Section 1
 
-```bash
-whoami              # current user
-id                  # current user + group memberships
-cat /etc/passwd     # list all users
-cat /etc/group      # list all groups
-sudo -l             # list what current user can run as sudo
-```
-
-**Key concepts:**
-
-- `/etc/passwd` shows all users — look for non-standard users during enumeration
-- `sudo -l` is one of the first things to run after gaining a foothold
-
----
-
-## Networking Basics
-
-```bash
-ip a                # show all network interfaces and IPs
-ip route            # show routing table
-ss -tln             # listening ports
-curl http://localhost:<port>   # test locally running services
-```
-
----
-
-## Key Takeaways So Far
-
-- Linux file permissions and ownership are fundamental — misconfigurations here are a major attack surface
-- SUID binaries, writable files, and sudo permissions are the first things to check during privilege escalation
-- Services listening only on localhost won't be visible from outside — always enumerate internally after foothold
-- `find` with `2>/dev/null` is essential to suppress noise from permission-denied errors
-
----
-
-## Resources
-
-- [HackTheBox Academy — Linux Fundamentals](https://academy.hackthebox.com/module/details/18)
-- [GTFOBins](https://gtfobins.github.io) — SUID/sudo binary abuse reference
-- [Linux Privilege Escalation Guide](https://book.hacktricks.xyz/linux-hardening/privilege-escalation)
+- The shell is the primary interface for Linux — fluency here is non-negotiable for CTF work
+- SSH is the standard way to connect to remote Linux machines (`ssh user@ip`)
+- File permissions are a fundamental attack surface — misconfigurations lead directly to privilege escalation
+- Always check SUID binaries and writable files early in post-exploitation enumeration
