@@ -179,8 +179,8 @@ Linux has several types of files — understanding them helps during enumeration
 **Symbolic links (symlinks)** give access to files without duplicating the file itself. A symlink is a pointer to another file or directory — it allows quick access to files without duplicating the actual data.
 
 ```bash
-ls -la              # symlinks shown with -> pointing to target
-ln -s /path/target linkname    # create a symbolic link
+ls -la                          # symlinks shown with -> pointing to target
+ln -s /path/target linkname     # create a symbolic link
 readlink linkname               # show where a symlink points
 ```
 
@@ -247,7 +247,93 @@ cat /etc/fstab                 # show filesystems configured to mount at boot
 
 ---
 
-## Key Takeaways — Sections 1-3
+## 6. Swap, Containerization & Package Management
+
+### Swap Space
+
+Swap space is an essential part of memory management in Linux and plays a vital role in ensuring smooth system performance when the available physical memory (RAM) is fully utilized. When RAM runs out, the kernel moves inactive memory pages to swap space on disk to free up RAM for active processes.
+
+```bash
+mkswap /dev/sdb2        # format a partition as swap
+swapon /dev/sdb2        # enable the swap partition
+swapoff /dev/sdb2       # disable the swap partition
+swapon --show           # show active swap spaces
+free -h                 # show RAM and swap usage
+```
+
+**Swap file alternative (no dedicated partition needed):**
+
+```bash
+fallocate -l 2G /swapfile       # create a 2GB swap file
+chmod 600 /swapfile             # secure it — only root can read/write
+mkswap /swapfile                # format as swap
+swapon /swapfile                # enable it
+```
+
+---
+
+### Containerization
+
+Containerization is the process of packaging and running applications in isolated environments. Containers are process-isolated, lightweight, and typically deployed to run the same way regardless of where they are deployed — eliminating the "works on my machine" problem.
+
+**Key tools:**
+
+| Tool                       | Description                                                               |
+| -------------------------- | ------------------------------------------------------------------------- |
+| **Docker**                 | Most widely used container platform — packages apps with all dependencies |
+| **Linux Containers (LXC)** | OS-level virtualization — closer to a lightweight VM than Docker          |
+| **Docker Compose**         | Define and run multi-container applications with a single config file     |
+
+```bash
+docker ps                       # list running containers
+docker ps -a                    # list all containers including stopped
+docker images                   # list available images
+docker run -it ubuntu bash      # run an interactive Ubuntu container
+docker exec -it <id> bash       # get a shell inside a running container
+```
+
+**Why this matters for CTF/pentest:**
+
+- Docker group membership = effective root — always check `id` for docker group
+- Misconfigured containers with mounted host volumes can be escaped
+- Check for `.dockerenv` in the root directory to detect if you're inside a container
+
+---
+
+### Package Management
+
+A package is an archive file containing multiple data files — binaries, configuration files, documentation — along with metadata about the package. Package managers handle installation, updates, and removal cleanly.
+
+**Common package managers:**
+
+| Manager | Distro             | Usage                 |
+| ------- | ------------------ | --------------------- |
+| `apt`   | Debian, Ubuntu     | `apt install <pkg>`   |
+| `dpkg`  | Debian, Ubuntu     | `dpkg -i package.deb` |
+| `snap`  | Universal          | `snap install <pkg>`  |
+| `pip`   | Python packages    | `pip install <pkg>`   |
+| `gem`   | Ruby packages      | `gem install <pkg>`   |
+| `git`   | Source from GitHub | `git clone <url>`     |
+
+```bash
+apt update                      # update package list
+apt upgrade                     # upgrade all installed packages
+apt install <package>           # install a package
+apt remove <package>            # remove a package
+apt search <package>            # search for a package
+dpkg -l                         # list all installed packages
+dpkg -l | grep <name>           # check if a specific package is installed
+```
+
+**Why this matters for CTF/pentest:**
+
+- Outdated packages with known CVEs are a common attack surface
+- `dpkg -l` after foothold reveals installed software versions to check for exploits
+- `pip` and `gem` packages installed as root can sometimes be hijacked
+
+---
+
+## Key Takeaways — Sections 1-4
 
 - The shell is the primary interface for Linux — fluency here is non-negotiable for CTF work
 - SSH is the standard way to connect to remote Linux machines (`ssh user@ip`)
@@ -258,3 +344,5 @@ cat /etc/fstab                 # show filesystems configured to mount at boot
 - `grep`, `find`, and pipes are the most-used tools during enumeration — master them early
 - Symlinks pointing to sensitive files and writable `/tmp` symlink attacks are classic CTF privesc techniques
 - Always check `lsblk`, `fdisk -l`, and `/etc/fstab` after gaining a foothold — unmounted partitions may contain sensitive data
+- Docker group membership is equivalent to root — always check `id` immediately after gaining a shell
+- Check installed package versions with `dpkg -l` — outdated packages with known CVEs are a common attack path
