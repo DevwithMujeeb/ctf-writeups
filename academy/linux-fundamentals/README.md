@@ -4,6 +4,7 @@
 **Platform:** HackTheBox Academy
 **Status:** ✅ Completed
 **Sections:** 30 sections · 21 Interactive
+**Completed:** July 2026
 
 ---
 
@@ -42,6 +43,10 @@ cd ~            # go to home directory
 Every file and directory in Linux has associated permissions that control who can read, write, or execute it. Understanding permissions is critical — misconfigurations are one of the most common privilege escalation vectors in CTFs and real environments.
 
 **Permission format:**
+
+```
+-rwxr-xr--  1  owner  group  size  date  filename
+```
 
 | Position | Meaning                                                        |
 | -------- | -------------------------------------------------------------- |
@@ -90,14 +95,7 @@ The Linux file system involves organizing, storing, and managing data on a disk 
 
 ### Inodes
 
-Inodes are data structures that store metadata about each file and directory, including:
-
-- Permissions
-- Ownership
-- Size
-- Timestamps (created, modified, accessed)
-
-**Important:** Inodes do NOT store the file's actual data or its name — they only store pointers to where the file's data is stored on the disk. The filename-to-inode mapping is stored in the directory itself.
+Inodes are data structures that store metadata about each file and directory, including permissions, ownership, size, and timestamps. Inodes do NOT store the file's actual data or its name — they only store pointers to where the file's data is stored on the disk. The filename-to-inode mapping is stored in the directory itself.
 
 ```bash
 ls -i file          # show inode number of a file
@@ -107,7 +105,7 @@ df -i               # show inode usage across filesystems
 
 ### Network File System (NFS)
 
-NFS is a network protocol that allows commands on a network to share and manage files. It allows systems on a network to access files on remote systems as if they were stored on the local system.
+NFS is a network protocol that allows systems on a network to access files on remote systems as if they were stored locally.
 
 ```bash
 showmount -e <ip>                       # show NFS shares on a remote host
@@ -116,23 +114,20 @@ mount -t nfs <ip>:/share /mnt/nfs       # mount a remote NFS share
 
 **Why this matters for CTF/pentest:**
 
-- Misconfigured NFS shares (no_root_squash) can allow privilege escalation
+- Misconfigured NFS shares (`no_root_squash`) can allow privilege escalation
 - Always check for NFS shares during enumeration
 
 ---
 
 ## 4. Filter Tools & Working with Text
 
-Linux provides powerful tools for filtering, searching, and processing text output. These are essential for parsing command output, log files, and configuration files during enumeration.
+Linux provides powerful tools for filtering, searching, and processing text output — essential for parsing command output, log files, and configuration files during enumeration.
 
 ```bash
 grep "pattern" file          # search for a pattern in a file
 grep -r "pattern" /path/     # recursive search across directories
 grep -v "pattern" file       # invert match — show lines that do NOT match
 grep -i "pattern" file       # case-insensitive search
-```
-
-```bash
 cat file                     # print entire file contents
 head -n 20 file              # show first 20 lines
 tail -n 20 file              # show last 20 lines
@@ -141,9 +136,6 @@ wc -l file                   # count number of lines
 sort file                    # sort lines alphabetically
 sort -u file                 # sort and remove duplicates
 uniq file                    # remove consecutive duplicate lines
-```
-
-```bash
 cut -d: -f1 /etc/passwd      # extract first field using : as delimiter
 awk '{print $1}' file        # print first column of each line
 sed 's/old/new/g' file       # find and replace globally in a file
@@ -170,16 +162,19 @@ find / -name "*.conf" 2>/dev/null | grep -v "proc"  # find config files
 
 ### File Types in Linux
 
-Linux has several types of files — understanding them helps during enumeration and exploitation.
+| Type             | Symbol | Description                                 |
+| ---------------- | ------ | ------------------------------------------- |
+| Regular file     | `-`    | Standard data file — text, images, binaries |
+| Directory        | `d`    | Container for files and other directories   |
+| Symbolic link    | `l`    | Pointer to another file or directory        |
+| Block device     | `b`    | Storage device (hard drive, USB)            |
+| Character device | `c`    | Sequential device (keyboard, terminal)      |
+| Socket           | `s`    | Inter-process communication                 |
+| Named pipe       | `p`    | FIFO inter-process communication            |
 
-**Regular files** store data such as text, images, and binary data. They reside on the file system and are the most common file type.
-
-**Directories** are special types of files that act as containers for other files and directories. When a file is referenced in a directory, that directory is referred to as the file's **parent directory**. They help organize files within the Linux file system to manage clutter.
-
-**Symbolic links (symlinks)** give access to files without duplicating the file itself. A symlink is a pointer to another file or directory — it allows quick access to files without duplicating the actual data.
+**Symbolic links (symlinks)** give access to files without duplicating the file itself — quick access without duplicating actual data.
 
 ```bash
-ls -la                          # symlinks shown with -> pointing to target
 ln -s /path/target linkname     # create a symbolic link
 readlink linkname               # show where a symlink points
 ```
@@ -189,25 +184,9 @@ readlink linkname               # show where a symlink points
 - Writable symlinks pointing to sensitive files can be abused
 - Race conditions involving symlinks (`/tmp` symlink attacks) are a classic privesc technique
 
-**File types summary:**
-
-| Type             | Symbol | Description                            |
-| ---------------- | ------ | -------------------------------------- |
-| Regular file     | `-`    | Standard data file                     |
-| Directory        | `d`    | Container for files                    |
-| Symbolic link    | `l`    | Pointer to another file                |
-| Block device     | `b`    | Storage device (hard drive, USB)       |
-| Character device | `c`    | Sequential device (keyboard, terminal) |
-| Socket           | `s`    | Inter-process communication            |
-| Named pipe       | `p`    | FIFO inter-process communication       |
-
----
-
 ### Disk Management
 
-Disk management in Linux involves managing physical storage devices including hard drives, SSDs, and removable storage. The key tool is `fdisk` — it allows disk management to create, delete, and manage partitions on a drive. It can also display information about the size and type of each partition.
-
-**Partitioning** a drive on Linux involves dividing the physical storage space into separate logical sections.
+`fdisk` allows disk management — create, delete, and manage partitions on a drive.
 
 ```bash
 fdisk -l                    # list all disks and partitions
@@ -225,11 +204,9 @@ parted /dev/sda print       # show partition table using parted
 | `gpart`   | BSD partition tool                       |
 | `GParted` | Graphical partition editor (GUI)         |
 
----
-
 ### Mounting
 
-Mounting involves linking a drive or partition to a directory, making its contents accessible within the overall file system hierarchy. Without mounting, a disk or partition is inaccessible even if it's physically connected.
+Mounting involves linking a drive or partition to a directory, making its contents accessible within the overall file system hierarchy.
 
 ```bash
 mount /dev/sdb1 /mnt/usb       # mount a partition to a directory
@@ -243,7 +220,6 @@ cat /etc/fstab                 # show filesystems configured to mount at boot
 
 - `/etc/fstab` can reveal NFS shares, unusual mount points, and misconfigurations
 - Unmounted partitions may contain sensitive data — always check `lsblk` and `fdisk -l`
-- World-readable mount points are worth investigating
 
 ---
 
@@ -251,7 +227,7 @@ cat /etc/fstab                 # show filesystems configured to mount at boot
 
 ### Swap Space
 
-Swap space is an essential part of memory management in Linux and plays a vital role in ensuring smooth system performance when the available physical memory (RAM) is fully utilized. When RAM runs out, the kernel moves inactive memory pages to swap space on disk to free up RAM for active processes.
+Swap space is an essential part of memory management in Linux — when available physical memory (RAM) is fully utilized, the kernel moves inactive memory pages to swap space on disk.
 
 ```bash
 mkswap /dev/sdb2        # format a partition as swap
@@ -259,30 +235,18 @@ swapon /dev/sdb2        # enable the swap partition
 swapoff /dev/sdb2       # disable the swap partition
 swapon --show           # show active swap spaces
 free -h                 # show RAM and swap usage
+fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
 ```
-
-**Swap file alternative (no dedicated partition needed):**
-
-```bash
-fallocate -l 2G /swapfile       # create a 2GB swap file
-chmod 600 /swapfile             # secure it — only root can read/write
-mkswap /swapfile                # format as swap
-swapon /swapfile                # enable it
-```
-
----
 
 ### Containerization
 
-Containerization is the process of packaging and running applications in isolated environments. Containers are process-isolated, lightweight, and typically deployed to run the same way regardless of where they are deployed — eliminating the "works on my machine" problem.
+Containerization is the process of packaging and running applications in isolated environments — deployed the same way regardless of where they run.
 
-**Key tools:**
-
-| Tool                       | Description                                                               |
-| -------------------------- | ------------------------------------------------------------------------- |
-| **Docker**                 | Most widely used container platform — packages apps with all dependencies |
-| **Linux Containers (LXC)** | OS-level virtualization — closer to a lightweight VM than Docker          |
-| **Docker Compose**         | Define and run multi-container applications with a single config file     |
+| Tool                       | Description                                          |
+| -------------------------- | ---------------------------------------------------- |
+| **Docker**                 | Most widely used container platform                  |
+| **Linux Containers (LXC)** | OS-level virtualization — closer to a lightweight VM |
+| **Docker Compose**         | Multi-container application management               |
 
 ```bash
 docker ps                       # list running containers
@@ -295,16 +259,12 @@ docker exec -it <id> bash       # get a shell inside a running container
 **Why this matters for CTF/pentest:**
 
 - Docker group membership = effective root — always check `id` for docker group
+- Check for `.dockerenv` in `/` to detect if you're inside a container
 - Misconfigured containers with mounted host volumes can be escaped
-- Check for `.dockerenv` in the root directory to detect if you're inside a container
-
----
 
 ### Package Management
 
-A package is an archive file containing multiple data files — binaries, configuration files, documentation — along with metadata about the package. Package managers handle installation, updates, and removal cleanly.
-
-**Common package managers:**
+A package is an archive file containing binaries, configuration files, and documentation. Package managers handle installation, updates, and removal cleanly.
 
 | Manager | Distro             | Usage                 |
 | ------- | ------------------ | --------------------- |
@@ -316,11 +276,9 @@ A package is an archive file containing multiple data files — binaries, config
 | `git`   | Source from GitHub | `git clone <url>`     |
 
 ```bash
-apt update                      # update package list
-apt upgrade                     # upgrade all installed packages
+apt update && apt upgrade       # update and upgrade all packages
 apt install <package>           # install a package
 apt remove <package>            # remove a package
-apt search <package>            # search for a package
 dpkg -l                         # list all installed packages
 dpkg -l | grep <name>           # check if a specific package is installed
 ```
@@ -328,117 +286,60 @@ dpkg -l | grep <name>           # check if a specific package is installed
 **Why this matters for CTF/pentest:**
 
 - Outdated packages with known CVEs are a common attack surface
-- `dpkg -l` after foothold reveals installed software versions to check for exploits
-- `pip` and `gem` packages installed as root can sometimes be hijacked
+- `dpkg -l` reveals installed software versions to check for known exploits
 
 ---
 
 ## 7. Linux Networking & Network Configuration
 
-### Linux Networking Overview
-
-One of the primary tasks of Linux networking is managing network interfaces — this involves assigning IP addresses, configuring network devices such as routers and switches, and setting up various network protocols including TCP/IP.
+### Network Interfaces
 
 ```bash
 ip a                            # show all network interfaces and IP addresses
 ip r                            # show routing table
 ip link show                    # show network interface status
 ifconfig                        # older alternative to ip a
-```
-
-### Configuring Network Interfaces
-
-```bash
 ifconfig eth0 192.168.1.100 netmask 255.255.255.0    # set IP (temporary)
 ip addr add 192.168.1.100/24 dev eth0                # set IP using ip command
-ip link set eth0 up                                   # bring interface up
-ip link set eth0 down                                 # bring interface down
-```
-
-**DNS configuration:**
-
-```bash
+ip link set eth0 up / down                           # bring interface up or down
 cat /etc/resolv.conf            # show current DNS servers
 cat /etc/hosts                  # local hostname to IP mappings
 ```
 
-Updating DNS settings is done by editing `/etc/resolv.conf` or updating via `systemd-resolved`. Restarting the networking service applies changes:
-
-```bash
-systemctl restart networking        # Debian/Ubuntu
-systemctl restart NetworkManager    # modern systems
-```
-
----
-
 ### Network Access Control
 
-Network access control determines who can access what on the network. There are three primary models:
+| Model    | Full Name                    | Controlled By           |
+| -------- | ---------------------------- | ----------------------- |
+| **DAC**  | Discretionary Access Control | The resource owner      |
+| **MAC**  | Mandatory Access Control     | The operating system    |
+| **RBAC** | Role-Based Access Control    | Roles assigned to users |
 
-| Model    | Full Name                    | Controlled By                                        |
-| -------- | ---------------------------- | ---------------------------------------------------- |
-| **DAC**  | Discretionary Access Control | The resource owner — owner decides who can access    |
-| **MAC**  | Mandatory Access Control     | The operating system — enforced by policy, not owner |
-| **RBAC** | Role-Based Access Control    | Roles assigned to users — access based on role       |
+**Enforcement tools:**
 
-**Permission-based enforcement tools:**
+| Tool                 | Purpose                                             |
+| -------------------- | --------------------------------------------------- |
+| `syslog` / `rsyslog` | System logging                                      |
+| `ss`                 | Modern socket statistics                            |
+| **ELK Stack**        | Elasticsearch + Logstash + Kibana — log aggregation |
 
-| Tool          | Purpose                                                          |
-| ------------- | ---------------------------------------------------------------- |
-| `syslog`      | System logging daemon                                            |
-| `rsyslog`     | Enhanced syslog with filtering and remote logging                |
-| `ss`          | Modern socket statistics tool                                    |
-| **ELK Stack** | Elasticsearch + Logstash + Kibana — log aggregation and analysis |
-
-```bash
-ss -tln                         # show listening TCP ports
-ss -tulnp                       # show all listening sockets with process info
-```
-
----
-
-### Network Monitoring
-
-Network monitoring involves capturing, analysing, and interpreting network traffic to identify security threats, performance issues, and suspicious behaviour.
+### Network Monitoring & Troubleshooting
 
 ```bash
 tcpdump -i eth0                 # capture traffic on eth0
 tcpdump -i eth0 port 80         # capture only HTTP traffic
 tcpdump -w capture.pcap         # write capture to file
-wireshark                       # GUI packet analyser
-netstat -tlnp                   # show listening ports with processes (older)
-ss -tulnp                       # modern alternative to netstat
-```
-
----
-
-### Troubleshooting Network Connectivity
-
-```bash
+ss -tulnp                       # show all listening sockets with process info
+netstat -tlnp                   # older alternative to ss
 ping <host>                     # test basic connectivity
 traceroute <host>               # trace the network path to a host
 nmap -sn <ip-range>             # ping sweep to discover live hosts
 dig <domain>                    # detailed DNS lookup
-nslookup <domain>               # simple DNS lookup
 curl -I http://<host>           # check HTTP response headers
 ```
 
-**Key troubleshooting tools:**
-
-| Tool         | Purpose                                         |
-| ------------ | ----------------------------------------------- |
-| `ping`       | Test basic connectivity                         |
-| `netstat`    | Display active connections and listening ports  |
-| `traceroute` | Trace path packets take to reach a host         |
-| `tcpdump`    | Capture and analyse packets at the command line |
-| `wireshark`  | GUI packet analyser                             |
-| `nmap`       | Network discovery and port scanning             |
-
----
-
 ### Secure Shell (SSH)
 
-SSH (Secure Shell) is a network protocol that allows the secure transmission of data and commands over a network. It is the standard way to remotely manage Linux systems.
+SSH (Secure Shell) allows secure transmission of data and commands over a network — the standard way to remotely manage Linux systems.
 
 ```bash
 ssh user@<ip>                           # connect to remote host
@@ -451,54 +352,31 @@ ssh -D 9050 user@<ip>                   # dynamic SOCKS proxy
 **Why SSH matters for CTF/pentest:**
 
 - SSH keys found on a compromised machine can grant access to other hosts
-- Port forwarding via SSH is used to pivot through networks and access internal services
+- Port forwarding via SSH is used to pivot through networks
 - Always check `~/.ssh/` for private keys, `authorized_keys`, and `known_hosts`
 
 ---
 
 ## 8. Linux Hardening & Security
 
-### Firewall Setup
+### Firewall Setup — iptables
 
-A firewall is a security mechanism for controlling and monitoring network traffic between different network segments — such as internal and external networks, or different zones.
-
-**iptables** is the primary firewall tool on Linux. It uses tables, chains, rules, and targets to control the output of network traffic.
+`iptables` is the primary firewall tool on Linux. It uses tables, chains, rules, and targets to control network traffic.
 
 ```bash
-iptables -L                             # list all firewall rules
-iptables -A INPUT -p tcp --dport 22 -j ACCEPT   # allow SSH
-iptables -A INPUT -j DROP              # drop all other incoming traffic
-iptables -F                            # flush all rules
+iptables -L                                         # list all firewall rules
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT       # allow SSH
+iptables -A INPUT -j DROP                           # drop all other incoming
+iptables -F                                         # flush all rules
 ```
-
----
 
 ### Hardening Tools
 
-Linux provides several tools to harden systems against attacks. These are designed to safeguard Linux systems against various security threats, from unauthorized access to malicious attacks.
-
-| Tool             | Type           | Description                                                                                                              |
-| ---------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **SELinux**      | MAC system     | Security-Enhanced Linux — enforces mandatory access control policies at the kernel level                                 |
-| **AppArmor**     | MAC system     | Simpler alternative to SELinux — restricts programs by profile                                                           |
-| **TCP Wrappers** | Network filter | Restricts access to network services based on IP addresses of incoming connections — uses `hosts.allow` and `hosts.deny` |
-
-**SELinux** (Security-Enhanced Linux):
-
-- A MAC system built into the Linux kernel
-- Enforces fine-grained access control policies
-- Every process and file has a security context — access is only granted if the policy explicitly allows it
-
-**AppArmor**:
-
-- A MAC system that restricts programs based on per-program profiles
-- Simpler to configure than SELinux
-- Profiles define what files, capabilities, and network access a program is allowed
-
-**TCP Wrappers**:
-
-- Restricts access to network services based on IP addresses of incoming connections
-- Configured via `/etc/hosts.allow` and `/etc/hosts.deny`
+| Tool             | Type           | Description                                                                |
+| ---------------- | -------------- | -------------------------------------------------------------------------- |
+| **SELinux**      | MAC system     | Enforces mandatory access control at the kernel level                      |
+| **AppArmor**     | MAC system     | Restricts programs by per-program profiles                                 |
+| **TCP Wrappers** | Network filter | Restricts network service access by IP — uses `hosts.allow` / `hosts.deny` |
 
 ```bash
 sestatus                        # check SELinux status
@@ -507,128 +385,70 @@ cat /etc/hosts.allow            # show allowed hosts for TCP wrappers
 cat /etc/hosts.deny             # show denied hosts for TCP wrappers
 ```
 
----
+### Remote Desktop Protocols
 
-### Remote Desktop Protocols on Linux
-
-Linux supports several remote desktop protocols for graphical access to remote systems.
-
-**X Server (X11):**
-
-- The X Window System network protocol
-- TCP ports 6001-6007 (unencrypted/insecure by default)
-- X11 security involves `xhost` and `xauth` controls
-
-**XDMCP** (X Display Manager Control Protocol):
-
-- Allows remote graphical login sessions
-- Considered insecure — unencrypted
-
-**VNC (Virtual Network Computing):**
-
-- Allows remote desktop access over a network
-- Common VNC tools:
-
-| Tool     | Notes                              |
-| -------- | ---------------------------------- |
-| TigerVNC | Open source, widely used           |
-| RealVNC  | Commercial, cross-platform         |
-| UltraVNC | Windows-focused but cross-platform |
-
-Most tools use UltraVNC or RealVNC. Always encrypt VNC connections by setting up an **SSH tunnel**:
+| Protocol | Port          | Notes                                               |
+| -------- | ------------- | --------------------------------------------------- |
+| X11      | TCP 6001-6007 | Unencrypted by default — tunnel through SSH         |
+| VNC      | TCP 5900+     | Various tools: TigerVNC, RealVNC, UltraVNC          |
+| RDP      | TCP 3389      | Windows protocol — access from Linux via `xfreerdp` |
 
 ```bash
 ssh -L 5901:localhost:5901 user@<ip>    # tunnel VNC through SSH
 vncviewer localhost:5901                # connect through the tunnel
-```
-
-**RDP (Remote Desktop Protocol):**
-
-- Windows protocol — port 3389
-- Can be used on Linux via `xfreerdp` or `rdesktop`
-
-```bash
 xfreerdp /u:user /p:password /v:<ip>   # connect to Windows RDP from Linux
 ```
 
----
-
 ### System Logs & Monitoring
 
-System logs are a set of files that contain information about the system and the activities taking place in it. Logs are critical for detecting intrusions, troubleshooting issues, and maintaining audit trails.
+System logs are files that contain information about the system and the activities taking place in it — critical for detecting intrusions and maintaining audit trails.
 
-**Types of system logs on Linux:**
-
-| Log Type            | Location                 | Contents                                    |
-| ------------------- | ------------------------ | ------------------------------------------- |
-| Kernel logs         | `/var/log/kern.log`      | Kernel events, hardware errors              |
-| System logs         | `/var/log/syslog`        | General system activity                     |
-| Authentication logs | `/var/log/auth.log`      | Login attempts, sudo usage, SSH connections |
-| Application logs    | `/var/log/<app>/`        | Application-specific events                 |
-| Security logs       | `/var/log/secure` (RHEL) | Security-related events                     |
+| Log Type            | Location            | Contents                                    |
+| ------------------- | ------------------- | ------------------------------------------- |
+| Kernel logs         | `/var/log/kern.log` | Kernel events, hardware errors              |
+| System logs         | `/var/log/syslog`   | General system activity                     |
+| Authentication logs | `/var/log/auth.log` | Login attempts, sudo usage, SSH connections |
+| Application logs    | `/var/log/<app>/`   | Application-specific events                 |
+| Security logs       | `/var/log/secure`   | Security-related events (RHEL/CentOS)       |
 
 ```bash
-tail -f /var/log/auth.log       # watch authentication events in real time
+tail -f /var/log/auth.log                   # watch authentication events live
 grep "Failed password" /var/log/auth.log    # find failed SSH login attempts
-grep "sudo" /var/log/auth.log   # find sudo usage
-journalctl -u ssh               # show SSH service logs via systemd
-journalctl -f                   # follow all system logs in real time
-```
-
-**Log management tools:**
-
-| Tool          | Purpose                                                      |
-| ------------- | ------------------------------------------------------------ |
-| `syslog`      | Standard logging daemon                                      |
-| `rsyslog`     | Enhanced syslog — filtering, remote logging                  |
-| `auditd`      | Linux audit daemon — detailed security event logging         |
-| **ELK Stack** | Elasticsearch + Logstash + Kibana — centralised log analysis |
-
-**`auditd`** (Linux Audit Daemon):
-
-- Records detailed security events — file access, system calls, login attempts
-- Access and audit logs — events often recorded in security logs
-- Location of log files depends on specific application and security configuration
-
-```bash
-auditctl -l                     # list active audit rules
-ausearch -m LOGIN               # search audit log for login events
-aureport --auth                 # authentication report from audit log
+grep "sudo" /var/log/auth.log               # find sudo usage
+journalctl -u ssh                           # show SSH service logs
+journalctl -f                               # follow all system logs live
+auditctl -l                                 # list active audit rules
+ausearch -m LOGIN                           # search audit log for login events
+aureport --auth                             # authentication report
 ```
 
 **Why this matters for CTF/pentest:**
 
 - Auth logs reveal usernames, IP addresses, and timing of login attempts
-- Kernel logs can reveal hardware and driver information useful for privesc
-- On a compromised machine — clearing logs is a common attacker action, checking for gaps is a detection technique
+- On a compromised machine — attackers often clear logs, checking for gaps is a detection technique
 
 ---
 
 ## 9. Linux Distributions vs Solaris
 
-### Key Differences
+| Feature                | Linux                        | Solaris                                        |
+| ---------------------- | ---------------------------- | ---------------------------------------------- |
+| **File system**        | ext4, Btrfs, XFS             | ZFS (default — snapshots, integrity checksums) |
+| **Process management** | `ps`, `top`, `systemd`       | `ps`, `prstat`                                 |
+| **Package management** | `apt`, `yum`, `dnf`          | IPS (Image Packaging System)                   |
+| **Kernel**             | Open source                  | Proprietary (Oracle)                           |
+| **Hardware support**   | Broad — thousands of drivers | Focused on SPARC and x86 enterprise            |
+| **Virtualization**     | Docker, LXC                  | Solaris Zones                                  |
+| **Security**           | SELinux, AppArmor            | Solaris Zones, RBAC, Trusted Extensions        |
 
-Linux distributions and Solaris (Oracle Solaris) are both Unix-like operating systems but differ significantly in their design, use cases, and features.
-
-| Feature                | Linux                                  | Solaris                                 |
-| ---------------------- | -------------------------------------- | --------------------------------------- |
-| **File system**        | ext4, Btrfs, XFS (default varies)      | ZFS (default — advanced features)       |
-| **Process management** | `ps`, `top`, `systemd`                 | `ps`, `prstat` (Solaris-specific)       |
-| **Package management** | `apt`, `yum`, `dnf` (varies by distro) | IPS (Image Packaging System)            |
-| **Kernel**             | Linux kernel — open source             | Solaris kernel — proprietary (Oracle)   |
-| **Hardware support**   | Broad — thousands of drivers           | Focused on SPARC and x86 enterprise     |
-| **System monitoring**  | `top`, `htop`, `vmstat`                | `prstat`, `dtrace`                      |
-| **Security**           | SELinux, AppArmor                      | Solaris Zones, RBAC, Trusted Extensions |
-
-**ZFS** (Zettabyte File System) — Solaris default:
+**ZFS** (Zettabyte File System) — Solaris default, now also available on Linux via OpenZFS:
 
 - Advanced features: snapshots, data integrity checksums, built-in RAID
-- Now also available on Linux via OpenZFS
 
 **Solaris Zones:**
 
-- Lightweight virtualization similar to Linux containers
-- Each zone is an isolated environment within the same OS instance
+- Lightweight virtualization — isolated environments within the same OS instance
+- Similar to Linux containers but built into the OS
 
 ---
 
@@ -636,19 +456,18 @@ Linux distributions and Solaris (Oracle Solaris) are both Unix-like operating sy
 
 ### Essential Shortcuts
 
-| Shortcut    | Action                                           |
-| ----------- | ------------------------------------------------ |
-| `Ctrl+C`    | Kill the current running process                 |
-| `Ctrl+Z`    | Suspend the current process (send to background) |
-| `Ctrl+D`    | Exit the current shell / send EOF                |
-| `Ctrl+L`    | Clear the terminal screen                        |
-| `Ctrl+R`    | Reverse search through command history           |
-| `Ctrl+A`    | Move cursor to beginning of line                 |
-| `Ctrl+E`    | Move cursor to end of line                       |
-| `Ctrl+W`    | Delete the word before the cursor                |
-| `!!`        | Repeat the last command                          |
-| `!<number>` | Repeat command by history number                 |
-| `sudo !!`   | Re-run last command with sudo                    |
+| Shortcut  | Action                                       |
+| --------- | -------------------------------------------- |
+| `Ctrl+C`  | Kill the current running process             |
+| `Ctrl+Z`  | Suspend current process (send to background) |
+| `Ctrl+D`  | Exit the current shell / send EOF            |
+| `Ctrl+L`  | Clear the terminal screen                    |
+| `Ctrl+R`  | Reverse search through command history       |
+| `Ctrl+A`  | Move cursor to beginning of line             |
+| `Ctrl+E`  | Move cursor to end of line                   |
+| `Ctrl+W`  | Delete the word before the cursor            |
+| `!!`      | Repeat the last command                      |
+| `sudo !!` | Re-run last command with sudo                |
 
 ### Auto-complete
 
@@ -656,41 +475,32 @@ Linux distributions and Solaris (Oracle Solaris) are both Unix-like operating sy
 - Press `Tab` twice to show all possible completions when there are multiple options
 - Works for commands, file paths, and command arguments on most shells
 
-### Useful One-liners for CTF/Pentest
+### Essential CTF/Pentest One-liners
 
 ```bash
-# Find all SUID binaries
-find / -perm -4000 2>/dev/null
+# Privilege escalation enumeration
+find / -perm -4000 2>/dev/null                          # SUID binaries
+find / -writable -type f 2>/dev/null | grep -v proc     # writable files
+find / -mmin -10 2>/dev/null                            # recently modified files
+getcap -r / 2>/dev/null                                 # files with capabilities
 
-# Find world-writable files
-find / -writable -type f 2>/dev/null | grep -v proc
+# Credential hunting
+grep -r "password" /etc/ 2>/dev/null                    # passwords in config files
+grep -r "password" /var/www/ 2>/dev/null                # passwords in web files
+find / -name "*.conf" 2>/dev/null | xargs grep -l "pass" 2>/dev/null
 
-# Find files modified in the last 10 minutes
-find / -mmin -10 2>/dev/null
+# User and permission enumeration
+cat /etc/passwd | grep -v "nologin\|false"              # users with a shell
+sudo -l                                                 # sudo permissions
+id                                                      # current user and groups
+cat /etc/crontab && crontab -l                          # cron jobs
 
-# Search for passwords in config files
-grep -r "password" /etc/ 2>/dev/null
-
-# List all users with a shell
-cat /etc/passwd | grep -v "nologin\|false"
-
-# Check sudo permissions
-sudo -l
-
-# Check running processes
-ps aux
-
-# Check listening ports
-ss -tulnp
-
-# Check cron jobs
-crontab -l && cat /etc/crontab
-
-# Check kernel version (for kernel exploits)
-uname -a
-
-# Check OS version
-cat /etc/os-release
+# System information
+uname -a                                                # kernel version
+cat /etc/os-release                                     # OS version
+ss -tulnp                                               # listening ports
+ps aux                                                  # running processes
+env                                                     # environment variables
 ```
 
 ---
@@ -698,16 +508,16 @@ cat /etc/os-release
 ## Key Takeaways — Full Module
 
 - The shell is the primary interface for Linux — fluency here is non-negotiable for CTF work
-- SSH is the standard way to connect to remote Linux machines — always check `~/.ssh/` after gaining access
+- SSH is the standard way to connect to remote machines — always check `~/.ssh/` after gaining access
 - File permissions are a fundamental attack surface — SUID, world-writable files, and symlinks all lead to privesc
-- Inodes store metadata, not data — useful for forensic investigation and understanding file system anomalies
+- Inodes store metadata, not data — useful for forensic investigation
 - NFS and Docker misconfigurations are classic privilege escalation vectors — always check both
-- `grep`, `find`, and pipes are the most-used tools during enumeration — master them
+- `grep`, `find`, and pipes are the most-used tools during enumeration — master them early
 - `ss -tulnp` replaces `netstat` on modern systems — shows listening ports with process info
-- SELinux and AppArmor enforce MAC policies — understanding them helps bypass defences on hardened targets
-- Auth logs (`/var/log/auth.log`) reveal login attempts, sudo usage, and SSH connections — critical for both attack and defence
-- `Ctrl+R` reverse history search and `Tab` autocomplete are two of the most time-saving shell habits to build early
-- ZFS (Solaris) vs ext4/Btrfs (Linux) — know the difference when you encounter Solaris in CTF or enterprise environments
+- SELinux and AppArmor enforce MAC policies — understanding them helps when encountering hardened targets
+- Auth logs reveal login attempts, sudo usage, and SSH connections — critical for both attack and defence
+- `Ctrl+R` reverse history search and `Tab` autocomplete are two of the most time-saving shell habits to build
+- ZFS (Solaris) vs ext4/Btrfs (Linux) — know the difference when you encounter Solaris in enterprise environments
 
 ---
 
@@ -715,6 +525,6 @@ cat /etc/os-release
 
 - [HackTheBox Academy — Linux Fundamentals](https://academy.hackthebox.com/module/details/18)
 - [GTFOBins](https://gtfobins.github.io) — SUID/sudo binary abuse reference
-- [Linux Privilege Escalation Guide](https://book.hacktricks.xyz/linux-hardening/privilege-escalation)
+- [HackTricks — Linux Privilege Escalation](https://book.hacktricks.xyz/linux-hardening/privilege-escalation)
 - [iptables documentation](https://netfilter.org/documentation/)
-- [SELinux User Guide](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/using_selinux/index)
+- [OpenZFS documentation](https://openzfs.github.io/openzfs-docs/)
