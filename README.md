@@ -25,11 +25,11 @@ ctf-writeups/
 
 ## Academy Notes
 
-| Module                                                       | Status         |
-| ------------------------------------------------------------ | -------------- |
-| [Linux Fundamentals](./academy/linux-fundamentals/README.md) | 🟡 In progress |
-| Networking Fundamentals                                      | 🔲 Upcoming    |
-| Web Requests                                                 | 🔲 Upcoming    |
+| Module                                                       | Status       |
+| ------------------------------------------------------------ | ------------ |
+| [Linux Fundamentals](./academy/linux-fundamentals/README.md) | ✅ Completed |
+| Networking Fundamentals                                      | 🔲 Upcoming  |
+| Web Requests                                                 | 🔲 Upcoming  |
 
 ---
 
