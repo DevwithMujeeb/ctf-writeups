@@ -76,7 +76,7 @@ An attacker performing a man-in-the-middle attack on HTTP traffic sees the full 
 
 Every HTTP request has the same fundamental structure — a method, a path, headers, and optionally a body.
 
-**Request line:** Contains the HTTP method, the path being requested, and the HTTP version. For example: `GET /index.html HTTP/1.1`
+**Request line:** Contains the HTTP method, the path being requested, and the HTTP version — for example `GET /index.html HTTP/1.1`.
 
 **Request headers:** Key-value pairs that provide additional context about the request — who's sending it, what format they accept, what cookies they have, and more.
 
@@ -146,96 +146,153 @@ The fastest way to check all response headers: `curl -I https://target.com` — 
 
 ### HTTP Methods
 
-HTTP methods (also called verbs) define the type of action being requested. Each method has a specific intended purpose — and security implications when misused or when servers don't properly restrict which methods are allowed.
+HTTP methods define the type of action being requested. Each method has a specific intended purpose — and security implications when misused or when servers don't properly restrict which methods are allowed.
 
-| Method    | Purpose                                      | Has body? | Security notes                                                       |
-| --------- | -------------------------------------------- | --------- | -------------------------------------------------------------------- |
-| `GET`     | Retrieve a resource                          | No        | Parameters in URL — visible in logs, history, referrer               |
-| `POST`    | Submit data to the server                    | Yes       | Creates resources, triggers actions — most common injection target   |
-| `PUT`     | Replace a resource entirely                  | Yes       | If unauthenticated, can overwrite arbitrary files                    |
-| `PATCH`   | Partially update a resource                  | Yes       | Same risks as PUT                                                    |
-| `DELETE`  | Delete a resource                            | No        | Missing auth = anyone can delete anything                            |
-| `HEAD`    | Same as GET but no response body             | No        | Useful for recon — reveals headers without downloading body          |
-| `OPTIONS` | List supported methods for a resource        | No        | Reveals what the server allows — useful during recon                 |
-| `TRACE`   | Echo the request back                        | No        | Can be used in Cross-Site Tracing (XST) attacks — should be disabled |
-| `CONNECT` | Establish a tunnel (used for HTTPS proxying) | No        | Can be abused to proxy traffic through a server                      |
+| Method    | Purpose                          | Has body? | Security notes                                         |
+| --------- | -------------------------------- | --------- | ------------------------------------------------------ |
+| `GET`     | Retrieve a resource              | No        | Parameters in URL — visible in logs, history, referrer |
+| `POST`    | Submit data to the server        | Yes       | Most common injection target                           |
+| `PUT`     | Replace a resource entirely      | Yes       | If unauthenticated, can overwrite arbitrary files      |
+| `PATCH`   | Partially update a resource      | Yes       | Same risks as PUT                                      |
+| `DELETE`  | Delete a resource                | No        | Missing auth = anyone can delete anything              |
+| `HEAD`    | Same as GET but no response body | No        | Useful for recon — reveals headers without body        |
+| `OPTIONS` | List supported methods           | No        | Reveals what the server allows                         |
+| `TRACE`   | Echo the request back            | No        | Can be used in Cross-Site Tracing (XST) attacks        |
 
-**Why methods matter for AppSec/CTF:**
-
-Servers should only allow the methods they actually need. A static website should only allow `GET` and `HEAD`. An API endpoint that only reads data should never allow `PUT` or `DELETE`. When a server allows more methods than it should, attackers can abuse the extras.
-
-Always check what methods a server allows: `curl -X OPTIONS https://target.com -i` — the response will include an `Allow` header listing every permitted method. Finding `PUT` or `DELETE` on a path that shouldn't support them is a significant finding.
-
-**Method override abuse:** Some frameworks support `X-HTTP-Method-Override` or `_method` parameters that let a POST request pretend to be a PUT or DELETE. This exists for legacy clients that can't send certain methods — but if not properly validated, it can be abused to perform actions the server thinks it's restricting.
+Always check what methods a server allows: `curl -X OPTIONS https://target.com -i` — the response `Allow` header lists every permitted method. Finding `PUT` or `DELETE` on a path that shouldn't support them is a significant finding.
 
 ### HTTP Status Codes
 
-Status codes tell the client what happened with their request. They are grouped into five classes — and each class tells a different story during security testing.
+| Range | Class         | What it means during testing                                                    |
+| ----- | ------------- | ------------------------------------------------------------------------------- |
+| 1xx   | Informational | Request received and processing                                                 |
+| 2xx   | Success       | Request worked — `200 OK`, `201 Created`, `204 No Content`                      |
+| 3xx   | Redirection   | `301` permanent, `302` temporary — test redirect params for open redirect       |
+| 4xx   | Client errors | `401` needs auth, `403` exists but blocked, `404` not found, `429` rate limited |
+| 5xx   | Server errors | `500` something broke — a signal when testing injection                         |
 
-**1xx — Informational:** The request was received and is being processed. Rarely seen in normal web testing.
-
-**2xx — Success:** The request was received, understood, and accepted.
-
-| Code             | Meaning                      | Security notes                              |
-| ---------------- | ---------------------------- | ------------------------------------------- |
-| `200 OK`         | Request succeeded            | Standard success                            |
-| `201 Created`    | Resource was created         | Confirms a POST/PUT succeeded               |
-| `204 No Content` | Success but no body returned | Common on DELETE — confirms deletion worked |
-
-**3xx — Redirection:** The client must take additional action to complete the request.
-
-| Code                    | Meaning                            | Security notes                                                |
-| ----------------------- | ---------------------------------- | ------------------------------------------------------------- |
-| `301 Moved Permanently` | Resource moved — update your links | Redirect target can reveal internal structure                 |
-| `302 Found`             | Temporary redirect                 | Open redirect vulnerability if destination is user-controlled |
-| `304 Not Modified`      | Cached version is still valid      |                                                               |
-
-**Open redirect** is a common vulnerability where `?redirect=https://evil.com` causes the server to redirect users to an attacker-controlled site. Always test redirect parameters.
-
-**4xx — Client Errors:** The request was malformed or unauthorized.
-
-| Code                     | Meaning                          | Security notes                                                    |
-| ------------------------ | -------------------------------- | ----------------------------------------------------------------- |
-| `400 Bad Request`        | Malformed request                | Useful for fuzzing — unexpected 400s reveal input handling        |
-| `401 Unauthorized`       | Authentication required          | No valid credentials provided                                     |
-| `403 Forbidden`          | Authenticated but not authorized | Access control is enforced — try to bypass                        |
-| `404 Not Found`          | Resource doesn't exist           | Directory brute-forcing relies on distinguishing 404 from 200/403 |
-| `405 Method Not Allowed` | HTTP method not permitted        | Confirms the method restriction — try others                      |
-| `429 Too Many Requests`  | Rate limited                     | Confirms rate limiting is in place                                |
-
-**The difference between 401 and 403 matters:** A `401` means "who are you?" — you need to authenticate. A `403` means "I know who you are, but you can't do this" — you're authenticated but not authorized. Getting a `403` on a path tells you it exists and is protected — worth investigating for bypass techniques.
-
-**5xx — Server Errors:** The server failed to fulfill a valid request.
-
-| Code                        | Meaning                       | Security notes                                                         |
-| --------------------------- | ----------------------------- | ---------------------------------------------------------------------- |
-| `500 Internal Server Error` | Something broke on the server | Often triggered by injection — a 500 response to a payload is a signal |
-| `502 Bad Gateway`           | Upstream server error         | Reveals proxy/load balancer architecture                               |
-| `503 Service Unavailable`   | Server overloaded or down     |                                                                        |
-
-**A 500 response to a crafted input is one of the most useful signals in web security testing.** It means your input reached the server, caused unexpected behaviour, and broke something. It doesn't always mean you've found a vulnerability — but it means you've found an error condition worth investigating further.
-
-### cURL for method and status code testing
-
-`curl -X GET https://target.com` — explicit GET request. `curl -X POST https://target.com/api -d '{"key":"value"}' -H "Content-Type: application/json"` — POST with JSON body. `curl -X OPTIONS https://target.com -i` — check allowed methods. `curl -I https://target.com` — HEAD request, see only response headers and status code. `curl -v https://target.com` — verbose mode, see full request and response including headers.
-
-**Why status codes matter during CTF enumeration:**
-
-When directory brute-forcing with gobuster or ffuf, you're looking for responses that differ from the baseline. A `200` or `301` on a path you guessed means it exists. A `403` means it exists but is protected. A `404` means it doesn't exist. Filtering by status code is how you cut through noise and find what matters.
+**Key distinctions:** A `403` means the resource exists and is protected — worth investigating for bypass techniques. A `500` response to a crafted input means your payload caused unexpected behaviour — investigate further. During directory brute-forcing, filtering by status code is how you cut through noise and find what matters.
 
 ---
 
-## Key Takeaways — Sections 1-3
+## 6. GET Requests
+
+GET is the most common HTTP method — used to retrieve resources without modifying server state. All parameters travel in the URL query string, making them visible in browser history, server logs, proxy logs, and the `Referer` header of any subsequent request.
+
+**GET request anatomy:** The method, path, and query string all appear on the first line — `GET /search?query=test&page=1 HTTP/1.1` — followed by headers, with no request body.
+
+**cURL GET examples:** `curl https://target.com` sends a basic GET. `curl "https://target.com/api/users?id=1"` sends a GET with a query parameter. `curl -v https://target.com` shows the full request and response in verbose mode. `curl -H "Authorization: Bearer eyJ..." https://target.com/api/profile` sends a GET with an auth header.
+
+### GET security implications
+
+**Parameter tampering:** Since GET parameters are in the URL, they're trivially easy to modify. `?id=1` becomes `?id=2`, `?id=admin`, `?id=1 OR 1=1`. Every GET parameter is a potential IDOR, SQLi, or XSS injection point.
+
+**Information leakage:** GET parameters appear in server access logs, browser history, bookmarks, and the `Referer` header. Sensitive data — session tokens, API keys, personal information — should never travel in GET parameters.
+
+**Caching:** GET responses are often cached by browsers and proxies. This can expose sensitive data to other users on shared systems, or allow stale data to persist longer than intended.
+
+**Why this matters for CTF:** During web application testing, GET parameters are the first place to probe. Change `?id=1` to `?id=2` immediately — if you get another user's data, that's IDOR. Add a single quote (`?id=1'`) and watch for a 500 — that's a signal for SQLi. Inject `?name=<script>alert(1)</script>` and check if it reflects — that's reflected XSS.
+
+---
+
+## 7. POST Requests
+
+POST is used to submit data to the server — creating resources, triggering actions, submitting forms, and authenticating users. Unlike GET, the data travels in the request body rather than the URL, making it slightly less visible — but not more secure.
+
+**POST request anatomy:** The method and path appear on the first line (`POST /api/login HTTP/1.1`), followed by headers including `Content-Type` to tell the server how to parse the body, then a blank line, then the body itself.
+
+**Common POST body formats:**
+
+JSON (most common for APIs): body is `{"username":"admin","password":"secret"}` with `Content-Type: application/json` header.
+
+Form data (HTML forms): body is `username=admin&password=secret` with `Content-Type: application/x-www-form-urlencoded` header.
+
+Multipart (file uploads): used when uploading files — each part has its own headers and body section, with `Content-Type: multipart/form-data` header.
+
+**cURL POST examples:** `curl -X POST https://target.com/api/login -H "Content-Type: application/json" -d '{"username":"admin","password":"secret"}'` sends a JSON POST. `curl -X POST https://target.com/login -d "username=admin&password=secret"` sends form data. `curl -X POST https://target.com/upload -F "file=@shell.php"` uploads a file.
+
+### POST security implications
+
+**POST does not mean secure:** A common misconception is that POST is more secure than GET because parameters don't appear in the URL. The body is still readable by anyone who can intercept the traffic — HTTPS is what provides confidentiality, not the method.
+
+**Content-Type switching:** Changing the `Content-Type` header from `application/x-www-form-urlencoded` to `application/json` (or vice versa) sometimes bypasses input validation that was only written for one format. Worth trying when you hit a wall.
+
+**File upload abuse:** POST endpoints that accept file uploads are a major attack surface. If the server doesn't validate file type properly, uploading a PHP shell (`shell.php`) and then accessing it via the browser gives remote code execution. Always test upload endpoints for extension bypass (`shell.php.jpg`, `shell.pHp`, null byte injection `shell.php%00.jpg`).
+
+**Mass assignment:** If a POST body is directly mapped to a database model without filtering, adding extra fields (`"role":"admin"`) can sometimes set fields the developer didn't intend to expose. This is the mass assignment vulnerability — check what fields the server actually processes vs what it documents.
+
+---
+
+## 8. CRUD APIs
+
+CRUD (Create, Read, Update, Delete) is the standard pattern for REST APIs. Each operation maps to an HTTP method, and each endpoint represents a resource. Understanding this mapping is essential for API security testing — because each operation has a distinct set of security concerns.
+
+### CRUD to HTTP method mapping
+
+| CRUD Operation   | HTTP Method | Endpoint example      | Expected response |
+| ---------------- | ----------- | --------------------- | ----------------- |
+| Create           | `POST`      | `POST /api/users`     | `201 Created`     |
+| Read (all)       | `GET`       | `GET /api/users`      | `200 OK` + list   |
+| Read (one)       | `GET`       | `GET /api/users/1`    | `200 OK` + object |
+| Update (full)    | `PUT`       | `PUT /api/users/1`    | `200 OK` or `204` |
+| Update (partial) | `PATCH`     | `PATCH /api/users/1`  | `200 OK` or `204` |
+| Delete           | `DELETE`    | `DELETE /api/users/1` | `200 OK` or `204` |
+
+### API security testing methodology
+
+**Step 1 — Enumerate endpoints.** APIs often have predictable structures. If you find `/api/users/1`, try `/api/users/2`, `/api/admin`, `/api/users/1/settings`. Directory brute-forcing with an API-focused wordlist (SecLists has several) reveals hidden endpoints.
+
+**Step 2 — Test every CRUD operation on every endpoint.** Just because the documentation says an endpoint only supports GET doesn't mean the server enforces it. Try POST, PUT, DELETE. Unexpected method support is a significant finding.
+
+**Step 3 — Test authorization on every endpoint.** The most common API vulnerability is broken object-level authorization (BOLA/IDOR) — accessing another user's resources by changing an ID. `GET /api/users/1` as user 2 should return 403, not user 1's data.
+
+**Step 4 — Test authentication bypass.** Remove the `Authorization` header entirely. Change `Bearer token` to `Bearer null` or `Bearer undefined`. Try accessing endpoints without any credentials. APIs that return data without authentication are a critical finding.
+
+**Step 5 — Fuzz input fields.** Every field in a POST/PUT body is a potential injection point. Test for SQLi, XSS, command injection, SSRF, and XXE depending on context.
+
+**cURL for API testing:** `curl https://target.com/api/users` reads all users. `curl https://target.com/api/users/1` reads user 1. `curl -X POST https://target.com/api/users -H "Content-Type: application/json" -d '{"name":"test","email":"test@test.com"}'` creates a user. `curl -X PUT https://target.com/api/users/1 -H "Content-Type: application/json" -d '{"name":"updated"}'` updates user 1. `curl -X DELETE https://target.com/api/users/1` deletes user 1.
+
+### Common API vulnerabilities
+
+**BOLA (Broken Object Level Authorization) / IDOR:** Accessing another user's object by changing an ID in the URL or body. The most prevalent API vulnerability — test every ID parameter.
+
+**Broken Function Level Authorization:** Regular users accessing admin-only endpoints. Try `/api/admin`, `/api/users/1/promote`, `/api/settings` without admin credentials.
+
+**Mass Assignment:** Sending extra fields in POST/PUT bodies that get processed by the server — `"role":"admin"`, `"isAdmin":true`, `"balance":999999`.
+
+**Excessive Data Exposure:** APIs returning more data than the UI displays — the frontend hides sensitive fields but the raw API response includes them. Always read the full response body, not just what the browser renders.
+
+**Rate Limiting Absence:** No throttling on authentication endpoints — enables brute force. Test by sending 50 rapid requests and checking if any get blocked.
+
+---
+
+## Key Takeaways — Full Module
 
 - HTTP is stateless — cookies, sessions, and tokens exist to work around this
 - Every URL component is a potential attack surface — test parameters, paths, and credentials
-- HTTPS encrypts data in transit but does not make an application secure
+- HTTPS encrypts data in transit but does not make an application secure — HTTPS + secure code is required
 - TLS certificates leak subdomain and infrastructure information — always check during recon
-- The request body is where injection attacks live — always test every input field
+- The request body is where injection attacks live — test every input field on every endpoint
 - Response headers reveal the technology stack — check every version string against CVE databases
 - Missing security headers are findings — always run `curl -I https://target.com` early in any assessment
 - Cookies without `HttpOnly` are vulnerable to XSS-based session theft
-- Always check allowed HTTP methods with OPTIONS — unexpected methods like PUT or DELETE are findings
-- A `403` response means the resource exists and is protected — worth investigating for bypass
+- Always check allowed HTTP methods with OPTIONS — unexpected PUT or DELETE are findings
+- A `403` response means the resource exists and is protected — investigate for bypass
 - A `500` response to a crafted input means something broke — investigate further
-- Status code differences during directory brute-forcing are how you find hidden content
+- GET parameters are trivially modified — test every one for IDOR, SQLi, and XSS immediately
+- POST does not mean secure — HTTPS provides confidentiality, not the method
+- Content-Type switching sometimes bypasses input validation — always try it
+- File upload endpoints are high-value targets — always test for extension bypass
+- BOLA/IDOR is the most common API vulnerability — test every ID parameter
+- Always read the full raw API response — the frontend hides fields the API still returns
+- Remove the Authorization header entirely on every endpoint — unauthenticated access is a critical finding
+
+---
+
+## Resources
+
+- [HackTheBox Academy — Web Requests](https://academy.hackthebox.com/module/details/35)
+- [OWASP API Security Top 10](https://owasp.org/www-project-api-security/)
+- [PortSwigger Web Security Academy](https://portswigger.net/web-security)
+- [SecLists — API wordlists](https://github.com/danielmiessler/SecLists)
+- [My Web Requests notes (open source)](https://github.com/DevwithMujeeb/ctf-writeups)
