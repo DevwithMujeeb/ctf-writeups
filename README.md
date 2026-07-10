@@ -28,7 +28,7 @@ ctf-writeups/
 | Module                                                       | Status       |
 | ------------------------------------------------------------ | ------------ |
 | [Linux Fundamentals](./academy/linux-fundamentals/README.md) | ✅ Completed |
-| Networking Fundamentals                                      | 🔲 Upcoming  |
+| Networking Fundamentals                                      | ✅ Completed |
 | Web Requests                                                 | 🔲 Upcoming  |
 
 ---
