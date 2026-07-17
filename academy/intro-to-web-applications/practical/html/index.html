@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web App Lab</title>
+  </head>
+  <body>
+    <!-- Header section -->
+    <header>
+      <nav>
+        <ul>
+          <li><a href="#home">Home</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- Hero section -->
+    <section id="home">
+      <h1>Web Application Security Lab</h1>
+      <p>
+        A hands-on exploration of how web applications are built and how they
+        can be secured or exploited.
+      </p>
+      <button id="cta-btn">Get Started</button>
+    </section>
+
+    <!-- About section -->
+    <section id="about">
+      <h2>What is this?</h2>
+      <p>
+        This is a deliberately simple web application built to understand how
+        HTML, CSS, JavaScript, and backend code work together — and where
+        security vulnerabilities can be introduced at each layer.
+      </p>
+
+      <h3>Layers of a web application</h3>
+      <ul>
+        <li>
+          <strong>Front-end:</strong> HTML structure, CSS presentation,
+          JavaScript behaviour
+        </li>
+        <li>
+          <strong>Back-end:</strong> Server-side logic, database queries, API
+          endpoints
+        </li>
+        <li>
+          <strong>Database:</strong> Persistent storage — where sensitive data
+          lives
+        </li>
+      </ul>
+    </section>
+
+    <!-- Login form section -->
+    <section id="login">
+      <h2>Login</h2>
+      <!--
+            SECURITY NOTE:
+            This form illustrates what NOT to do.
+            Never leave credentials in HTML comments.
+            Never use GET method for login forms — parameters appear in the URL and server logs.
+            Always use POST with HTTPS for credential submission.
+        -->
+      <form action="/login" method="post">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required />
+
+        <button type="submit">Login</button>
+      </form>
+    </section>
+
+    <!-- API demo section -->
+    <section id="api">
+      <h2>API Demo</h2>
+      <p>Click the button below to fetch data from the backend API.</p>
+      <button id="fetch-btn">Fetch Users</button>
+      <div id="api-result"></div>
+    </section>
+
+    <!-- Contact section -->
+    <section id="contact">
+      <h2>Contact</h2>
+      <form id="contact-form">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" required />
+
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required />
+
+        <label for="message">Message</label>
+        <textarea id="message" name="message" rows="5" required></textarea>
+
+        <button type="submit">Send Message</button>
+      </form>
+      <div id="form-response"></div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>Web App Lab &copy; 2026 — Built for learning, not production.</p>
+    </footer>
+
+    <!-- JavaScript will be linked here in Step 3 -->
+    <script src="../js/main.js"></script>
+  </body>
+</html>
