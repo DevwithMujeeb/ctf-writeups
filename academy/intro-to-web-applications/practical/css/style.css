@@ -1,0 +1,236 @@
+/* ============================================
+   WEB APP LAB — STYLESHEET
+   Security note: CSS itself is not a security
+   boundary. Never hide sensitive data using
+   CSS (display:none, visibility:hidden) —
+   it's still in the DOM and visible in source.
+   ============================================ */
+
+/* --- Reset & Base --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #0d1117;
+  color: #e6edf3;
+  line-height: 1.6;
+}
+
+a {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* --- Navigation --- */
+header {
+  background-color: #161b22;
+  border-bottom: 1px solid #30363d;
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+header nav ul {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+}
+
+header nav ul li a {
+  color: #e6edf3;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+header nav ul li a:hover {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+/* --- Sections --- */
+section {
+  max-width: 800px;
+  margin: 4rem auto;
+  padding: 0 2rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  border-bottom: 1px solid #30363d;
+  padding-bottom: 0.5rem;
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+  color: #8b949e;
+}
+
+p {
+  color: #8b949e;
+  margin-bottom: 1rem;
+}
+
+ul {
+  padding-left: 1.5rem;
+  color: #8b949e;
+  margin-bottom: 1rem;
+}
+
+ul li {
+  margin-bottom: 0.5rem;
+}
+
+/* --- Buttons --- */
+button {
+  background-color: #238636;
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #2ea043;
+}
+
+button:disabled {
+  background-color: #21262d;
+  color: #484f58;
+  cursor: not-allowed;
+}
+
+/* --- Forms --- */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background-color: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 1rem;
+}
+
+label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #8b949e;
+}
+
+input,
+textarea {
+  background-color: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  font-size: 0.95rem;
+  padding: 0.6rem 0.8rem;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #58a6ff;
+}
+
+input[type="password"] {
+  letter-spacing: 0.1em;
+}
+
+textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* --- API Result Box --- */
+#api-result {
+  margin-top: 1rem;
+  background-color: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 1rem;
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+  color: #3fb950;
+  min-height: 60px;
+  white-space: pre-wrap;
+}
+
+#api-result:empty::before {
+  content: "No data fetched yet...";
+  color: #484f58;
+}
+
+/* --- Form Response --- */
+#form-response {
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  display: none;
+}
+
+#form-response.success {
+  background-color: #0f2c1a;
+  border: 1px solid #238636;
+  color: #3fb950;
+  display: block;
+}
+
+#form-response.error {
+  background-color: #2c0f0f;
+  border: 1px solid #da3633;
+  color: #f85149;
+  display: block;
+}
+
+/* --- Footer --- */
+footer {
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid #30363d;
+  color: #484f58;
+  font-size: 0.85rem;
+  margin-top: 4rem;
+}
+
+/* --- Security annotation --- */
+/*
+    SECURITY NOTE: CSS display:none and visibility:hidden
+    only hide elements visually. The content is still
+    present in the DOM — anyone inspecting the page
+    source or using DevTools can read it.
+
+    Example of what NOT to do:
+    .secret { display: none; }
+    <p class="secret">admin:password123</p>
+
+    This is still readable in DevTools even though
+    it's invisible on the page.
+*/
