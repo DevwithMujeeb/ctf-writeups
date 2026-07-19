@@ -1,63 +1,59 @@
 const express = require("express");
 const router = express.Router();
+const User = require("../models/User");
 
-// SECURITY NOTE: This endpoint is intentionally
-// simple for demonstration. In a real app:
-// - Require authentication before returning user data
-// - Never return password hashes in responses
-// - Paginate results — never return unbounded lists
-// - Filter fields explicitly rather than returning
-//   the full database document
-
-// Hardcoded demo data — Step 6 will replace this
-// with real database queries
-const demoUsers = [
-  {
-    id: 1,
-    name: "Alice Admin",
-    email: "alice@example.com",
-    role: "admin",
-    // password hash intentionally excluded from response
-  },
-  {
-    id: 2,
-    name: "Bob User",
-    email: "bob@example.com",
-    role: "member",
-  },
-];
+// ============================================
+// USER ROUTES
+//
+// SECURITY NOTE: In a real application every
+// route here would require authentication and
+// authorization middleware. These are left open
+// for demonstration purposes only.
+// ============================================
 
 // GET /api/users
-// SECURITY NOTE: No authentication required here —
-// this is intentional for demo purposes to show
-// what an unauthenticated API endpoint looks like.
-// In production this would require a valid JWT.
-router.get("/", (req, res) => {
-  res.status(200).json({
-    count: demoUsers.length,
-    users: demoUsers,
-  });
+// SECURITY NOTE: Never return password hashes.
+// Never return unbounded lists — always paginate.
+// This endpoint should require admin auth in production.
+router.get("/", async (req, res) => {
+  try {
+    // password excluded automatically (select: false)
+    const users = await User.find().select("-__v");
+
+    res.status(200).json({
+      count: users.length,
+      users,
+    });
+  } catch (err) {
+    console.error("Get users error:", err.message);
+    res.status(500).json({ message: "Something went wrong." });
+  }
 });
 
 // GET /api/users/:id
-// SECURITY NOTE: The :id parameter is user-controlled.
-// Without proper validation, this is an IDOR
-// (Insecure Direct Object Reference) vulnerability —
-// changing the ID in the URL accesses any user's data.
-router.get("/:id", (req, res) => {
-  const id = parseInt(req.params.id);
+// SECURITY NOTE: This is an IDOR vulnerability
+// if not properly authorized — any authenticated
+// user can access any other user's data by changing
+// the ID in the URL. Always verify the requesting
+// user is authorized to access the requested resource.
+router.get("/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-__v");
 
-  if (isNaN(id)) {
-    return res.status(400).json({ message: "Invalid user ID" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ user });
+  } catch (err) {
+    // SECURITY NOTE: An invalid MongoDB ObjectId
+    // throws a CastError — handle it gracefully
+    // rather than leaking the error to the client.
+    if (err.name === "CastError") {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    res.status(500).json({ message: "Something went wrong." });
   }
-
-  const user = demoUsers.find((u) => u.id === id);
-
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
-  }
-
-  res.status(200).json({ user });
 });
 
 module.exports = router;
