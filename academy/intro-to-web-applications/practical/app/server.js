@@ -46,14 +46,14 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // SECURITY NOTE: Without rate limiting, login
 // endpoints are trivially brute-forced.
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   message: { message: "Too many requests, please try again later." },
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10, // stricter on auth endpoints
+  max: 10,
   message: { message: "Too many login attempts, please try again later." },
 });
 
@@ -61,16 +61,17 @@ app.use("/api/", limiter);
 app.use("/api/login", authLimiter);
 
 // --- Static files ---
-// Serve the frontend HTML/CSS/JS
 app.use(express.static(path.join(__dirname, "../html")));
 app.use("/css", express.static(path.join(__dirname, "../css")));
 app.use("/js", express.static(path.join(__dirname, "../js")));
 
 // --- Routes ---
+const apiRoutes = require("./routes/api");
 const userRoutes = require("./routes/users");
 const authRoutes = require("./routes/auth");
 const contactRoutes = require("./routes/contact");
 
+app.use("/api", apiRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/contact", contactRoutes);
@@ -98,7 +99,7 @@ app.use((err, req, res, next) => {
 
   res.status(500).json({
     message: err.message,
-    stack: err.stack, // only in development
+    stack: err.stack,
   });
 });
 
