@@ -1,56 +1,73 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const { requireAuth, requireRole } = require("../middleware/auth");
 
 // ============================================
 // USER ROUTES
 //
-// SECURITY NOTE: In a real application every
-// route here would require authentication and
-// authorization middleware. These are left open
-// for demonstration purposes only.
+// Demonstrates two access control patterns:
+// 1. requireAuth — any authenticated user
+// 2. requireRole('admin') — admin only
+//
+// SECURITY NOTE: Authorization checks happen
+// server-side in middleware — never trust the
+// client to send their own role or permissions.
 // ============================================
 
 // GET /api/users
-// SECURITY NOTE: Never return password hashes.
-// Never return unbounded lists — always paginate.
-// This endpoint should require admin auth in production.
-router.get("/", async (req, res) => {
+// Admin only — lists all users
+// SECURITY NOTE: User listing is sensitive data.
+// Regular members should never see all accounts.
+router.get("/", requireAuth, requireRole("admin"), async (req, res) => {
   try {
-    // password excluded automatically (select: false)
-    const users = await User.find().select("-__v");
-
-    res.status(200).json({
-      count: users.length,
-      users,
-    });
+    const users = await User.find().sort({ createdAt: -1 });
+    res.status(200).json({ count: users.length, users });
   } catch (err) {
-    console.error("Get users error:", err.message);
     res.status(500).json({ message: "Something went wrong." });
   }
 });
 
+// GET /api/users/profile
+// Any authenticated user — returns own profile only
+// SECURITY NOTE: This endpoint only returns the
+// requesting user's own data — no IDOR risk since
+// the user ID comes from the verified JWT, not
+// from user-controlled input.
+router.get("/profile", requireAuth, (req, res) => {
+  res.status(200).json({
+    user: {
+      id: req.user._id,
+      username: req.user.username,
+      email: req.user.email,
+      role: req.user.role,
+      createdAt: req.user.createdAt,
+    },
+  });
+});
+
 // GET /api/users/:id
-// SECURITY NOTE: This is an IDOR vulnerability
-// if not properly authorized — any authenticated
-// user can access any other user's data by changing
-// the ID in the URL. Always verify the requesting
-// user is authorized to access the requested resource.
-router.get("/:id", async (req, res) => {
+// IDOR demonstration — intentionally vulnerable
+// SECURITY NOTE: This endpoint accepts a user ID
+// from the URL — any authenticated user can access
+// any other user's data by changing the ID.
+// This is an Insecure Direct Object Reference (IDOR).
+// The fix: verify req.user._id matches req.params.id
+// OR require admin role.
+router.get("/:id", requireAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("-__v");
+    const user = await User.findById(req.params.id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // IDOR VULNERABILITY: No check that the
+    // requesting user owns this resource
     res.status(200).json({ user });
   } catch (err) {
-    // SECURITY NOTE: An invalid MongoDB ObjectId
-    // throws a CastError — handle it gracefully
-    // rather than leaking the error to the client.
     if (err.name === "CastError") {
-      return res.status(400).json({ message: "Invalid user ID" });
+      return res.status(400).json({ message: "Invalid user ID format" });
     }
     res.status(500).json({ message: "Something went wrong." });
   }
