@@ -233,3 +233,112 @@ Each risk in the Top 10 represents a category of vulnerabilities that are widesp
 - CSRF exploits browser cookie behaviour — `SameSite` cookies and CSRF tokens are the primary defences
 - HttpOnly cookies prevent JavaScript from reading session tokens — defence-in-depth against XSS session hijacking
 - OWASP Top 10 is the standard reference for web security risk — know it, map every vulnerability to it
+
+---
+
+## 6. Back End Components
+
+The back end is the layer the user never sees — but it is where most of the critical logic lives: authentication, authorization, data storage, and business rules. Compromising the back end is the goal of most web attacks because that is where sensitive data actually lives.
+
+The back end is made up of four main components: the backend server, the web server, the database, and development frameworks.
+
+### Backend Server
+
+The backend server is the hardware and operating system that hosts all other backend components and runs all the applications necessary to power the web application. It contains three layers of software on top of the hardware:
+
+- **Web Server** — handles HTTP traffic
+- **Web Application Logic** — the application code itself
+- **Database** — stores and retrieves data
+
+Backend servers typically run on Linux (most common in production) or Windows. The OS is itself an attack surface — misconfigurations, unpatched vulnerabilities, and unnecessary services all expand exposure.
+
+### Web Servers
+
+A web server is an application that runs on the backend server and handles all HTTP traffic from the client-side browser. It routes incoming requests to the correct pages or application logic, and returns responses to the client. Web servers typically listen on TCP port 80 (HTTP) or port 443 (HTTPS).
+
+Common web servers:
+
+| Web Server         | Language/Stack                  | Known Users                          |
+| ------------------ | ------------------------------- | ------------------------------------ |
+| **Apache (httpd)** | PHP, general purpose            | Apple, Adobe, BBC, Intel, Twitter    |
+| **Nginx**          | High-performance, reverse proxy | Google, Facebook, Netflix, GitHub    |
+| **IIS**            | Microsoft/.NET (ASP.NET)        | Microsoft ecosystem, Windows Servers |
+
+**Security relevance:** Web servers are the first point of contact for every request. Misconfigurations at this layer — exposed directory listings, default pages left enabled, verbose server headers revealing version info — are low-effort wins for attackers.
+
+### HTTP Response Codes
+
+HTTP status codes communicate the result of every request. Knowing these is fundamental for web testing — response codes reveal application behaviour and can indicate vulnerabilities.
+
+**2xx — Success**
+
+- `200 OK` — request has succeeded
+
+**3xx — Redirection**
+
+- `301 Moved Permanently` — URL of the requested resource has changed permanently
+- `302 Found` — URL has been changed temporarily
+
+**4xx — Client Errors**
+
+- `400 Bad Request` — server could not understand the request due to malformed syntax
+- `401 Unauthorized` — unauthenticated attempt to access a page
+- `403 Forbidden` — client does not have access rights to the content
+- `404 Not Found` — server cannot find the requested resource
+- `405 Method Not Allowed` — request method is known by the server but not supported for the target resource
+- `408 Request Timeout` — response being sent on an idle connection timed out
+
+**5xx — Server Errors**
+
+- `500 Internal Server Error` — server encountered a situation it does not know how to handle
+- `502 Bad Gateway` — server, while acting as a gateway, received an invalid response from the upstream server
+- `504 Gateway Timeout` — server acting as a gateway could not get a response in time
+
+**Security relevance:** 401 vs 403 reveals whether a resource exists and whether auth is required. 500 errors can indicate unhandled exceptions leaking stack traces. Unexpected 302s during testing can reveal open redirects.
+
+### Databases
+
+Web applications use databases to store and retrieve content, user data, and application state. The choice of database affects both performance and the nature of potential injection vulnerabilities.
+
+Database selection factors: speed, size, scalability, cost.
+
+#### Relational Databases (SQL)
+
+SQL databases store data in tables with rows and columns. Relationships between tables within a database are defined by a **schema**. They use Structured Query Language (SQL) to query and manipulate data.
+
+Common relational databases:
+
+- **MySQL** — most widely used open-source relational DB; common in LAMP stacks
+- **MSSQL (Microsoft SQL Server)** — used with Windows Servers and IIS web servers
+- **Oracle** — enterprise-grade, common in large organisations
+- **PostgreSQL** — open-source, highly standards-compliant, strong extension ecosystem
+- **SQLite** — lightweight, file-based; common in mobile and embedded apps
+- **MariaDB** — MySQL fork, drop-in compatible
+
+**Security relevance:** If user input reaches a SQL query without proper parameterization, **SQL Injection** is possible — allowing attackers to read arbitrary data, bypass authentication, modify records, or in some cases execute OS commands via the database.
+
+#### Non-Relational Databases (NoSQL)
+
+NoSQL databases do not use the traditional table/row/column model. Instead, they use flexible storage models suited to different data types and access patterns. They do not use schemas or fixed relationships.
+
+Common NoSQL storage models:
+
+- **Key-Value** — data stored as simple key-value pairs (JSON, XML); e.g. Redis
+- **Document-Based** — stores complex nested JSON documents; e.g. MongoDB, CouchDB
+- **Wide Column** — data stored in columns rather than rows; e.g. Apache Cassandra
+- **Graph** — data stored as nodes and edges representing relationships; e.g. Neo4j
+
+Other examples: ElasticSearch, Amazon DynamoDB.
+
+**Security relevance:** NoSQL databases are not immune to injection. **NoSQL Injection** exploits the query syntax of the specific database — MongoDB queries using `$where`, `$gt`, and similar operators can be manipulated if user input is not sanitized. The attack surface differs from SQL injection but the root cause is the same: unsanitized user input reaching a query interpreter.
+
+---
+
+## Key Takeaways — Section 3
+
+- The backend server hosts the web server, application logic, and database — compromise any one layer and the others are at risk
+- Apache, Nginx, and IIS are the dominant web servers — each has its own configuration surface and known misconfigurations
+- HTTP status codes are diagnostic signals during testing — 401 vs 403, and 500 errors revealing stack traces, matter
+- SQL databases are vulnerable to SQL Injection when input is not parameterized — always use prepared statements
+- NoSQL databases have their own injection vectors — different syntax, same root cause: unsanitized user input
+- Database choice affects both architecture and attack surface — know what you are running and how it handles untrusted input
