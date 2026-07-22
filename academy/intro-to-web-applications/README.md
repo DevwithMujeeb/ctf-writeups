@@ -464,3 +464,98 @@ CVSS uses three metric groups: **Base** (intrinsic characteristics), **Temporal*
 - File upload vulnerabilities can lead directly to RCE — server-side validation and execution prevention are non-negotiable
 - CVE + CVSS are the industry standard for tracking and scoring known vulnerabilities — always check versions against public databases during recon
 - CVSS Base/Temporal/Environmental scoring gives context to severity — a Critical CVE in software you do not run is not your priority
+
+---
+
+## 9. Top Developer Mistakes
+
+Security vulnerabilities rarely appear out of nowhere — they are introduced by developers making predictable, recurring mistakes. The following are the most common mistakes web developers make that create exploitable security holes.
+
+- **Permitting invalid data to enter the database** — unsanitized input reaching queries or storage; root cause of injection vulnerabilities
+- **Focusing on the system as a whole** — missing security issues in individual components by only thinking at the macro level
+- **Establishing personally developed security methods** — rolling your own crypto or auth instead of using battle-tested libraries
+- **Treating security as your last step** — bolting security on after development is complete rather than building it in from the start
+- **Developing plaintext password storage** — storing passwords without hashing; a database breach exposes every account instantly
+- **Creating weak passwords** — permitting short, simple, or common passwords; no complexity or length requirements enforced
+- **Storing unencrypted data in the database** — sensitive fields (PII, card data, tokens) stored in plaintext
+- **Depending excessively on the client side** — trusting client-side validation, hidden fields, or JavaScript checks as security controls
+- **Being too optimistic** — assuming users will behave as intended; not accounting for malicious or unexpected input
+- **Permitting variables via the URL pathname** — exposing sensitive parameters or object references directly in URLs without authorization checks (IDOR)
+- **Trusting third-party code** — using npm packages, libraries, or CDN scripts without vetting them; supply chain risk
+- **Hardcoding backdoor accounts** — leaving test credentials, debug users, or default admin accounts in production
+- **Unverified SQL injections** — not using parameterized queries or prepared statements for every database interaction
+- **Remote file inclusions** — allowing user-controlled input to determine which file the server loads or executes
+- **Insecure data handling** — improper serialization, deserialization, or transmission of sensitive data
+- **Failing to encrypt data properly** — using deprecated algorithms (MD5, SHA1 for passwords), short key lengths, or no encryption at all
+- **Not using a secure cryptographic system** — implementing cryptography without understanding it; using ECB mode, static IVs, or hardcoded keys
+- **Ignoring layer 8** — underestimating the human element; social engineering, phishing, and insider threats bypass technical controls entirely
+- **Review user actions** — not logging or auditing what authenticated users do; no trail to detect abuse or investigate incidents
+- **Web application firewall misconfigurations** — deploying a WAF without tuning it; over-relying on it as the primary defence instead of fixing the underlying code
+
+---
+
+## 10. Module Key Takeaways
+
+This module reframes web application knowledge through a security lens. The shift is not about learning new technologies — it is about learning to look at familiar technologies as an attacker would.
+
+### The Attacker's Starting Point
+
+When web testing, the process starts from the front end — the front end trinity (HTML, CSS, JavaScript) — and works inward. The goal at each layer is to find vulnerabilities such as sensitive data exposure, XSS, injection points, and broken access controls before moving deeper into the application.
+
+### The Developer Mindset vs The Security Mindset
+
+A developer asks: _does this feature work?_
+
+A security engineer asks: _how can this feature be abused?_
+
+Both questions need to be answered before code ships. Security is not a final step or an external audit — it is a discipline embedded in every design and implementation decision.
+
+### How Everything Connects
+
+```
+User (Browser)
+     │
+     ▼
+Front End (HTML / CSS / JS)          ← XSS, CSRF, Sensitive Data Exposure, HTML Injection
+     │
+     ▼
+Web Server (Apache / Nginx / IIS)    ← Misconfiguration, version disclosure, default pages
+     │
+     ▼
+Application Layer (Framework/Logic)  ← Broken Auth, Broken Access Control, IDOR, File Upload
+     │
+     ▼
+Database (SQL / NoSQL)               ← SQL Injection, NoSQL Injection
+     │
+     ▼
+OS / Backend Server                  ← Command Injection, RCE, CVE exploitation
+```
+
+Every layer is an attack surface. A penetration tester works top-down through this stack. A developer must secure every layer.
+
+### Core Principles
+
+- **Input is the enemy** — every piece of user-supplied data is untrusted until validated and sanitized on the server. Client-side controls are not security.
+- **Defence in depth** — no single control is sufficient. Layer authentication, authorization, input validation, output encoding, logging, and monitoring.
+- **Least privilege** — every component (user, process, database account, API key) should have only the permissions it needs to function.
+- **Security by default** — secure configuration should be the starting state, not something applied after the fact.
+- **Know your stack** — you cannot secure what you do not understand. Know the web server, framework, database, and OS you are running, and what known vulnerabilities exist for each version.
+- **OWASP is the map** — the Top 10 covers the most impactful, most prevalent categories. Every vulnerability encountered in the real world maps to one of them.
+
+### What This Means for Penetration Testing
+
+Penetration testing of web applications follows a structured path:
+
+1. **Recon** — identify technologies, frameworks, server versions, and endpoints
+2. **Front end analysis** — review page source, JS files, network requests for sensitive data and injection points
+3. **Authentication testing** — brute force protection, session management, token security
+4. **Authorization testing** — IDOR, privilege escalation, horizontal/vertical access control
+5. **Input validation testing** — XSS, HTML injection, SQL injection, command injection, file upload
+6. **Configuration review** — HTTP headers, error messages, exposed admin panels, default credentials
+7. **Reporting** — map findings to CVEs and OWASP categories, score with CVSS
+
+This module provides the foundational knowledge that makes every step of that process possible.
+
+---
+
+_Module completed July 2026 — HackTheBox Academy, Junior Cybersecurity Analyst path_
