@@ -342,3 +342,125 @@ Other examples: ElasticSearch, Amazon DynamoDB.
 - SQL databases are vulnerable to SQL Injection when input is not parameterized — always use prepared statements
 - NoSQL databases have their own injection vectors — different syntax, same root cause: unsanitized user input
 - Database choice affects both architecture and attack surface — know what you are running and how it handles untrusted input
+
+---
+
+## 7. Development Frameworks & APIs
+
+### Development Frameworks
+
+With the increased complexity of modern web applications, building one from scratch is rarely practical. Development frameworks provide pre-built structure, conventions, routing, authentication scaffolding, and security primitives so developers can focus on application logic rather than low-level plumbing.
+
+Common backend frameworks:
+
+| Framework   | Language | Notes                                                                                                        |
+| ----------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| **Laravel** | PHP      | Widely used in enterprise PHP apps; built-in ORM, auth, and CSRF protection                                  |
+| **Express** | Node.js  | Minimal and flexible; most popular Node framework; requires manual security setup                            |
+| **Django**  | Python   | Batteries-included; strong security defaults — CSRF protection, SQL injection defence, XSS escaping built in |
+| **Rails**   | Ruby     | Convention over configuration; strong security defaults similar to Django                                    |
+| **Spring**  | Java     | Enterprise-grade; common in large organisations and banking systems                                          |
+
+**Security relevance:** Frameworks abstract away low-level details — but they also introduce their own vulnerabilities and misconfigurations. Using an outdated framework version with known CVEs maps directly to OWASP A06 (Vulnerable and Outdated Components). Developers who rely on a framework's defaults without understanding them often leave security features disabled or misconfigured.
+
+### APIs
+
+An **API (Application Programming Interface)** is the bridge connecting the front end and back end — enabling them to send data back and forth and carry out various functions within the web application without tightly coupling the two sides.
+
+#### Query Parameters
+
+The two default HTTP methods for passing parameters are GET and POST:
+
+- **GET** — parameters passed in the URL: `/search.php?item=apples`
+- **POST** — parameters sent in the HTTP request body (not visible in URL)
+
+#### Web APIs
+
+Two dominant API standards for web applications:
+
+**SOAP (Simple Object Access Protocol)**
+
+- Sends data through XML
+- The request is made via HTTP and the response is also returned in XML
+- Stricter standard — rigid message format, built-in error handling
+- Common in enterprise and legacy systems
+
+**REST API (Representational State Transfer)**
+
+- Shares data through the URL path: e.g. `/api/users/1`
+- Returns output in JSON format (or XML, or raw data)
+- Uses HTTP methods to perform different actions on the web application:
+  - `GET` — retrieve data
+  - `POST` — create data (non-idempotent)
+  - `PUT` — create or replace existing data
+  - `DELETE` — remove data
+- Stateless — each request contains all the information needed to process it
+- Most modern web apps and mobile apps use REST
+
+**Security relevance:** APIs are increasingly the primary attack surface of modern web applications. Common API vulnerabilities include broken object-level authorization (BOLA/IDOR — accessing another user's data by manipulating IDs in the URL), lack of rate limiting, missing authentication on endpoints, and verbose error responses leaking internal details. REST APIs are particularly exposed because every endpoint and parameter is visible in network traffic.
+
+---
+
+## 8. Common Web Vulnerabilities
+
+Beyond the front end vulnerabilities covered earlier, web applications are exposed to a broader set of backend and logic-layer vulnerabilities. These are the vulnerabilities most commonly encountered during penetration testing engagements.
+
+### Broken Authentication / Access Control
+
+**Broken Authentication** vulnerabilities allow attackers to bypass authentication functions entirely — gaining access to pages and functionality they should not be able to reach.
+
+**Broken Access Control** vulnerabilities allow attackers to access resources or perform actions beyond their intended permissions. When combined with other weaknesses, the impact escalates significantly.
+
+Examples:
+
+- Broken access control allows attackers to access pages they should not have access to
+- Broken authentication allows attackers to bypass authentication functions to access those pages
+- IDOR (`/user/101/edit-profile` accessed by user 102) — combined with broken access control, this gives full access to another user's account
+
+### Malicious File Upload
+
+A web application that allows users to upload a profile picture but does not restrict file type to images can be exploited. An attacker uploads a web shell (e.g. a PHP file) instead of an image. If the server executes uploaded files, the attacker achieves **Remote Code Execution (RCE)**.
+
+**Defence:** Validate file type on the server (not just client-side), store uploads outside the web root, serve uploads through a dedicated handler that does not execute files, use allow-lists not block-lists for permitted extensions.
+
+### Command Injection
+
+**Command Injection** occurs when user-supplied input is passed directly to a system shell command without sanitization. An attacker can append additional commands using shell metacharacters (`;`, `|`, `&&`, `` ` ``).
+
+SQL Injection targets the database interpreter. Command injection targets the OS shell. Both arise from the same root cause — unsanitized input reaching an interpreter.
+
+Example: a web app that pings a host using user input: `ping <user_input>`. An attacker submits `127.0.0.1; cat /etc/passwd` and the server executes both commands.
+
+**Defence:** Never pass user input directly to shell commands. Use language-level APIs that do not invoke a shell (e.g. `execFile` instead of `exec` in Node.js). Sanitize and validate all input. Apply principle of least privilege to the process running the web app.
+
+### Public CVEs and Vulnerability Databases
+
+**CVE (Common Vulnerabilities and Exposures)** is a public list of known security vulnerabilities. Each CVE entry has a unique identifier and describes a specific vulnerability in a specific product or version.
+
+**CVSS (Common Vulnerability Scoring System)** is the open-source industry standard for assessing the severity of security vulnerabilities. CVSS scores use several metrics to produce a numerical score (0–10) and severity rating:
+
+| Score Range | Severity |
+| ----------- | -------- |
+| 0.0         | None     |
+| 0.1 – 3.9   | Low      |
+| 4.0 – 6.9   | Medium   |
+| 7.0 – 8.9   | High     |
+| 9.0 – 10.0  | Critical |
+
+CVSS uses three metric groups: **Base** (intrinsic characteristics), **Temporal** (factors that change over time), and **Environmental** (characteristics specific to the organisation's environment).
+
+**Shellshock** is a well-known example of a backend server vulnerability with a CVE — a critical flaw in the Bash shell that allowed remote code execution via environment variables. It is a reminder that vulnerabilities are not limited to application code — the entire software stack, including the OS and shell, is in scope.
+
+**Security relevance:** During a penetration test, identifying the exact version of a web server, framework, or CMS is often the first step toward finding a matching public CVE. Version disclosure in HTTP response headers (`Server: Apache/2.4.1`) gives attackers a direct path to public exploits.
+
+---
+
+## Key Takeaways — Section 4
+
+- Frameworks speed up development but are not a security guarantee — outdated or misconfigured frameworks are a primary attack vector (OWASP A06)
+- REST APIs are the dominant API standard — every endpoint and ID in the URL is a potential IDOR/BOLA vector
+- SOAP is XML-based and rigid; REST is JSON-based and flexible — know both, but REST is what you will encounter in most modern apps
+- Command injection and SQL injection share the same root cause — user input reaching an interpreter without sanitization
+- File upload vulnerabilities can lead directly to RCE — server-side validation and execution prevention are non-negotiable
+- CVE + CVSS are the industry standard for tracking and scoring known vulnerabilities — always check versions against public databases during recon
+- CVSS Base/Temporal/Environmental scoring gives context to severity — a Critical CVE in software you do not run is not your priority
