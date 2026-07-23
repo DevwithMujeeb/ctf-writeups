@@ -29,7 +29,7 @@ ctf-writeups/
 | ------------------------------------------------------------ | ------------ |
 | [Linux Fundamentals](./academy/linux-fundamentals/README.md) | ✅ Completed |
 | Networking Fundamentals                                      | ✅ Completed |
-| Web Requests                                                 | 🔲 Upcoming  |
+| [Web Requests](./academy/web-requests/README.md)             | ✅ Completed |
 
 ---
 
