@@ -118,3 +118,132 @@ Client → Server: ACK
 - TCP is reliable and connection-oriented — UDP is fast and connectionless
 - The TCP three-way handshake (SYN → SYN-ACK → ACK) is the foundation of every TCP connection — and a target for denial-of-service attacks
 - Every layer of the OSI model has associated attacks — security thinking requires understanding all layers, not just the application layer
+
+---
+
+## 4. IP Addressing
+
+Every device on a network needs an address so data knows where to go. An **IP address** is a numerical label assigned to each device connected to a network that uses the Internet Protocol for communication.
+
+### IPv4
+
+**IPv4** addresses are **32-bit** numbers written in dotted decimal format — four groups of numbers separated by dots, each ranging from 0 to 255.
+
+Example: `192.168.1.105`
+
+Each group is called an **octet** (8 bits). Four octets × 8 bits = 32 bits total.
+
+IPv4 provides approximately 4.3 billion unique addresses — a number that has been exhausted due to the explosion of internet-connected devices.
+
+### IPv6
+
+**IPv6** addresses are **128-bit** numbers written as eight groups of four hexadecimal digits separated by colons.
+
+Example: `2001:0db8:85a3:0000:0000:8a2e:0370:7334`
+
+IPv6 provides 340 undecillion addresses — effectively unlimited for all practical purposes.
+
+**Key difference:**
+
+|               | IPv4            | IPv6             |
+| ------------- | --------------- | ---------------- |
+| Size          | 32-bit          | 128-bit          |
+| Format        | Decimal (0–255) | Hexadecimal      |
+| Example       | `192.168.1.1`   | `2001:db8::1`    |
+| Address space | ~4.3 billion    | ~340 undecillion |
+
+### IP Address Classes (IPv4)
+
+IPv4 addresses are divided into classes based on their range:
+
+| Class | Range                       | Default Use           |
+| ----- | --------------------------- | --------------------- |
+| A     | 1.0.0.0 – 126.255.255.255   | Large networks        |
+| B     | 128.0.0.0 – 191.255.255.255 | Medium networks       |
+| C     | 192.0.0.0 – 223.255.255.255 | Small networks        |
+| D     | 224.0.0.0 – 239.255.255.255 | Multicast             |
+| E     | 240.0.0.0 – 255.255.255.255 | Reserved/experimental |
+
+### Private vs Public IP Addresses
+
+Not all IP addresses are routable on the internet. **Private addresses** are reserved for use within internal networks and are not reachable from the public internet.
+
+| Range                           | Class | Common Use        |
+| ------------------------------- | ----- | ----------------- |
+| `10.0.0.0 – 10.255.255.255`     | A     | Large enterprises |
+| `172.16.0.0 – 172.31.255.255`   | B     | Medium networks   |
+| `192.168.0.0 – 192.168.255.255` | C     | Home/small office |
+
+**Security relevance:** During reconnaissance, identifying whether a target uses private addressing reveals internal network structure. RFC 1918 private ranges appearing in public-facing responses (error messages, headers) leak internal topology.
+
+### Subnetting
+
+**Subnetting** is the process of dividing a larger network into smaller sub-networks (subnets). It improves network efficiency and — critically for security — provides **segmentation**.
+
+A **subnet mask** defines which portion of an IP address identifies the network and which identifies the host:
+
+- IP address: `192.168.1.105`
+- Subnet mask: `255.255.255.0`
+- Network portion: `192.168.1`
+- Host portion: `.105`
+
+**CIDR notation** expresses the subnet mask as a prefix length — the number of bits used for the network portion:
+
+`192.168.1.0/24` means the first 24 bits are the network (255.255.255.0), leaving 8 bits for hosts = 256 addresses (254 usable).
+
+Common CIDR ranges:
+
+| CIDR | Subnet Mask     | Usable Hosts |
+| ---- | --------------- | ------------ |
+| /8   | 255.0.0.0       | 16,777,214   |
+| /16  | 255.255.0.0     | 65,534       |
+| /24  | 255.255.255.0   | 254          |
+| /30  | 255.255.255.252 | 2            |
+
+**Security relevance:** Subnetting is used defensively to segment networks — isolating databases from web servers, separating guest Wi-Fi from internal systems. During a penetration test, identifying the subnet scope tells you how many hosts to scan and what lateral movement paths exist.
+
+---
+
+## 5. MAC Addresses
+
+An **IP address** identifies a device on a network logically. A **MAC (Media Access Control) address** identifies it physically — at the hardware level.
+
+Every Network Interface Card (NIC) has a MAC address burned in by the manufacturer. It is used for communication within a local network segment (Layer 2).
+
+**Format:** 48 bits, written as 6 pairs of hexadecimal digits:
+
+```
+AA:BB:CC:DD:EE:FF
+```
+
+**Structure:**
+
+- First 24 bits — **OUI (Organizationally Unique Identifier)** — assigned to the manufacturer (e.g. `00:1A:2B` = Cisco)
+- Last 24 bits — **Device identifier** — unique to the individual NIC
+
+**MAC vs IP:**
+
+|             | MAC Address           | IP Address        |
+| ----------- | --------------------- | ----------------- |
+| Layer       | Layer 2 (Data Link)   | Layer 3 (Network) |
+| Scope       | Local network segment | Entire internet   |
+| Assigned by | Manufacturer          | Network/admin     |
+| Changes?    | No (burned in)        | Yes (DHCP)        |
+
+**Security relevance:**
+
+- **MAC spoofing** — attackers can change their MAC address in software to impersonate another device or bypass MAC-based access controls
+- **OUI lookup** — during recon, looking up the OUI of a discovered MAC address reveals the device manufacturer, which can hint at the OS or device type
+- MAC addresses are visible in ARP tables — `arp -a` reveals MAC-to-IP mappings on the local network
+
+---
+
+## Key Takeaways — Section 2
+
+- IPv4 is 32-bit (dotted decimal), IPv6 is 128-bit (hexadecimal) — IPv4 address space is exhausted, IPv6 is the long-term solution
+- Private IP ranges (10.x, 172.16–31.x, 192.168.x) are not routable on the internet — they appear in internal networks
+- Subnetting divides networks into segments — CIDR /24 gives 254 usable hosts, /30 gives 2
+- Segmentation via subnetting is a core network security control — it limits lateral movement after compromise
+- MAC addresses operate at Layer 2 and identify hardware — the first 24 bits identify the manufacturer (OUI)
+- MAC spoofing is trivial — MAC-based access control alone is not a reliable security control
+- During recon: subnet scope determines scan range, OUI lookup reveals device type, private IPs in public responses leak internal topology
