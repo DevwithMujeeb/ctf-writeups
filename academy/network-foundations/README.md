@@ -409,3 +409,194 @@ Ports are numerical identifiers that direct traffic to the correct application o
 - DNS enumeration is one of the first steps in external recon — subdomains, MX records, and NS records all reveal attack surface
 - Know your ports — 22, 80, 443, 445, 3389 are the most commonly targeted in external scans
 - NAT hides internal networks behind a single public IP — it is not a security control, it is an addressing solution
+
+---
+
+## 8. Network Components
+
+### Components of a Network
+
+A network is made up of three categories of components working together:
+
+**End Devices (Hosts)** — the primary interface for users. These generate and consume network traffic:
+
+- Computers, smartphones, tablets
+- IoT devices (cameras, smart home devices)
+- Printers, servers
+
+**Intermediary Devices** — connect end devices and manage traffic flow across the network:
+
+- **Switches** — forward frames within a LAN based on MAC addresses (Layer 2)
+- **Routers** — forward packets between networks based on IP addresses (Layer 3). Use routing tables and protocols like OSPF (Open Shortest Path First) and BGP (Border Gateway Protocol) to find the most efficient path
+- **Modems** — convert digital signals to analog for transmission over phone/cable lines
+- **Access Points** — provide wireless connectivity to wired networks
+- **Firewalls** — filter traffic based on rules
+
+**Network Media and Software Components** — the physical and logical infrastructure:
+
+- Cables, wireless signals
+- Protocols, management software, firewalls
+
+**Servers** — provide services to other devices on the network:
+
+- Web servers, file servers, mail servers, database servers
+
+### Transmission Types
+
+**Analog transmission** — continuous signal carrying information (e.g. radio waves). Used in older telephone systems.
+
+**Digital transmission** — employs discrete signals (bits) to encode data. Used in all modern computer networks.
+
+### Transmission Modes
+
+How data flows between devices:
+
+| Mode            | Direction                      | Example                               |
+| --------------- | ------------------------------ | ------------------------------------- |
+| **Simplex**     | One-way only                   | Keyboard to computer, TV broadcast    |
+| **Half-Duplex** | Two-way but not simultaneously | Walkie-talkies, older Ethernet hubs   |
+| **Full-Duplex** | Two-way simultaneously         | Phone calls, modern Ethernet switches |
+
+### Transmission Media
+
+The physical medium over which data travels:
+
+**Wired:**
+
+- **Twisted Pair Cables** — most common, used in Ethernet (Cat5e, Cat6). Two types: UTP (unshielded) and STP (shielded)
+- **Coaxial Cables** — used in cable TV and older networks. More shielding than twisted pair
+- **Fibre Optic Cables** — transmits data as light pulses. Extremely high speed and long distance. Immune to electromagnetic interference
+
+**Wireless:**
+
+- **Radio Waves** — Wi-Fi and cellular networks. Can penetrate walls but susceptible to interference
+- **Microwaves** — satellite communications. High speed but requires line of sight
+- **Infrared** — short range only (e.g. TV remotes)
+
+**Security relevance:** Wired media is generally more secure — physical access is required to tap it. Wireless signals broadcast through the air and can be intercepted by anyone within range. Wi-Fi security (WPA2/WPA3) exists precisely because the medium is openly accessible.
+
+---
+
+## 9. Network Architecture
+
+**Internet Architecture** describes how data is organised, transmitted, and managed across networks.
+
+### Architecture Models
+
+**Peer-to-Peer (P2P)** — devices communicate directly with each other without a central server. Each device acts as both client and server. Simple to set up but difficult to manage and secure at scale. Common in file sharing.
+
+**Client-Server** — clients request services from dedicated servers. Centralised management and security controls. Used in websites, email, enterprise applications.
+
+**Single-Tier** — all components (presentation, logic, data) on one machine. Simple but not scalable and poor security isolation.
+
+**Two-Tier** — client communicates directly with the database. Faster but tight coupling creates security risks.
+
+**Three-Tier** — presentation, application logic, and database on separate layers. Standard for modern web applications. Security can be enforced at each layer boundary.
+
+**N-Tier** — further decomposition for large-scale systems. Microservices architecture is an example.
+
+### Network Topologies
+
+How devices are physically or logically arranged:
+
+| Topology   | Description                           | Security Consideration                                            |
+| ---------- | ------------------------------------- | ----------------------------------------------------------------- |
+| **Bus**    | All devices on one cable              | Single point of failure; easy to sniff traffic                    |
+| **Star**   | All devices connect to central switch | Switch failure takes down network; traffic isolated between ports |
+| **Ring**   | Devices connected in a circle         | Traffic passes through every node                                 |
+| **Mesh**   | Every device connects to every other  | Highly resilient; complex to manage                               |
+| **Hybrid** | Combination of topologies             | Most enterprise networks                                          |
+
+### Wireless Networks
+
+A wireless network uses radio waves or other wireless signals to connect devices without physical cables.
+
+**Wi-Fi frequency bands:**
+
+- **2.4 GHz** — longer range, penetrates walls better, but slower and more prone to interference
+- **5 GHz** — faster speeds but shorter range
+- **6 GHz (Wi-Fi 6E)** — newest band, least congested
+
+**Wireless access methods:**
+
+- Wireless router
+- Mobile hotspot
+- Cell tower
+
+**Wireless security protocols (in order of security):**
+
+| Protocol | Security Level | Notes                                         |
+| -------- | -------------- | --------------------------------------------- |
+| WEP      | ❌ Broken      | Cracked in minutes; never use                 |
+| WPA      | ⚠️ Weak        | Deprecated                                    |
+| WPA2     | ✅ Acceptable  | Still widely used; KRACK vulnerability exists |
+| WPA3     | ✅ Strong      | Current standard; use where available         |
+
+**Security relevance:** Wireless networks are inherently more exposed than wired networks — the signal is available to anyone within range. WEP and WPA can be cracked with tools like `aircrack-ng`. WPA2 with a weak passphrase is vulnerable to offline dictionary attacks after capturing the four-way handshake.
+
+---
+
+## 10. Network Security
+
+### CIA Triad in Networking
+
+Network security goals map directly to the CIA triad:
+
+- **Confidentiality** — only authorised users can view data. Enforced through encryption, access controls, VPNs
+- **Integrity** — data remains accurate and unaltered in transit. Enforced through hashing, digital signatures, checksums
+- **Availability** — network resources are accessible when needed. Protected against DoS/DDoS, hardware failure, misconfigurations
+
+### Firewalls
+
+A **firewall** filters network traffic based on defined rules — permitting or blocking packets based on IP address, port, protocol, and state.
+
+**Types of firewalls:**
+
+| Type                                | Description                                                                                  |
+| ----------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Packet Filtering**                | Inspects individual packets against static rules. Fast but no context                        |
+| **Stateful Inspection**             | Tracks connection state. Understands whether a packet is part of an established connection   |
+| **Application Layer (Proxy)**       | Inspects traffic at Layer 7. Can understand protocols like HTTP, FTP                         |
+| **Next-Generation Firewall (NGFW)** | Combines stateful inspection with deep packet inspection, IDS/IPS, and application awareness |
+
+### IDS and IPS
+
+| System  | Full Name                   | Function                                                            |
+| ------- | --------------------------- | ------------------------------------------------------------------- |
+| **IDS** | Intrusion Detection System  | Monitors traffic and alerts on suspicious activity — does not block |
+| **IPS** | Intrusion Prevention System | Monitors and actively blocks suspicious traffic in real time        |
+
+**Deployment types:**
+
+- **Network-based (NIDS/NIPS)** — sensor connected to the core switch monitoring all traffic
+- **Host-based (HIDS/HIPS)** — installed on individual devices
+
+**Important caveat:** WAFs and IDS/IPS can be bypassed. They provide defence-in-depth but developers and security engineers should not rely solely on appliances — fixing the underlying vulnerability is always the priority.
+
+### Network Diagnostic Tools
+
+Essential tools for understanding network behaviour — used by both administrators and penetration testers:
+
+**`ifconfig -a`** — displays all network interfaces and their current configuration including IP addresses, MAC addresses, and status. `lo` is the loopback interface (127.0.0.1).
+
+**`netstat -tulnp4`** — displays active network connections, routing tables, and interface statistics. Shows which ports are listening and which processes own them. `-tulnp` without the `4` shows both IPv4 and IPv6.
+
+**`ip route get <target IP>`** — displays the route taken for traffic sent to a specific destination. Reveals the gateway and interface used.
+
+**`ping -c 4 <target IP>`** — tests reachability of a host. TTL (Time to Live) in the response reveals OS hints (Linux default TTL: 64, Windows: 128).
+
+**`nmap <target IP>`** — runs a port scan and identifies what ports are open on a target machine, what services are running, and in some cases the OS and service versions.
+
+**`nc <target IP> <port>`** — netcat, the Swiss Army knife of networking. Connects raw TCP/UDP to any port for banner grabbing, file transfer, or reverse shells.
+
+---
+
+## Key Takeaways — Section 4
+
+- Networks consist of end devices, intermediary devices (switches, routers, firewalls), and transmission media — each is an attack surface
+- Full-duplex is the standard for modern networks — switches enable simultaneous bidirectional communication
+- Three-tier architecture separates presentation, logic, and data — security controls can be enforced at each layer boundary
+- WEP is broken, WPA is deprecated, WPA2 is acceptable, WPA3 is the current standard — always check what protocol a target wireless network uses
+- Firewalls filter traffic but NGFWs provide the most comprehensive protection through deep packet inspection and application awareness
+- IDS detects, IPS prevents — neither replaces fixing the underlying vulnerability
+- `ifconfig`, `netstat`, `ping`, `ip route`, `nmap`, and `nc` are the fundamental network diagnostic and reconnaissance tools — know them cold
