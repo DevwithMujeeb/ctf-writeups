@@ -247,3 +247,165 @@ AA:BB:CC:DD:EE:FF
 - MAC addresses operate at Layer 2 and identify hardware — the first 24 bits identify the manufacturer (OUI)
 - MAC spoofing is trivial — MAC-based access control alone is not a reliable security control
 - During recon: subnet scope determines scan range, OUI lookup reveals device type, private IPs in public responses leak internal topology
+
+---
+
+## 6. ARP — Address Resolution Protocol
+
+When a device wants to send data to another device on the same local network, it knows the destination IP address but needs the MAC address to actually deliver the frame at Layer 2. **ARP** solves this problem — it maps IP addresses to MAC addresses within a local network segment.
+
+### How ARP Works
+
+1. Device A wants to communicate with `192.168.1.10` but doesn't know its MAC address
+2. Device A broadcasts an **ARP Request** to the entire network: _"Who has 192.168.1.10? Tell 192.168.1.1"_
+3. The device with IP `192.168.1.10` responds with an **ARP Reply**: _"192.168.1.10 is at AA:BB:CC:DD:EE:FF"_
+4. Device A stores this mapping in its **ARP cache** for future use
+5. Communication proceeds using the MAC address
+
+**ARP cache** — devices store recent ARP mappings locally to avoid broadcasting for every packet. View it with:
+
+```bash
+arp -a
+```
+
+### ARP Poisoning / ARP Spoofing
+
+ARP has no authentication — any device can send an ARP reply claiming to be any IP address. This makes it vulnerable to **ARP poisoning**:
+
+1. Attacker sends unsolicited ARP replies to the network
+2. Victim devices update their ARP cache with the attacker's MAC address mapped to a legitimate IP (e.g. the default gateway)
+3. Traffic intended for the gateway now flows through the attacker
+4. Attacker can intercept, read, or modify traffic — **Man-in-the-Middle (MitM)**
+
+**Tools used:** `arpspoof`, `ettercap`, `bettercap`
+
+**Defence:** Dynamic ARP Inspection (DAI) on managed switches, static ARP entries for critical devices, encrypted protocols (HTTPS, SSH) so intercepted traffic is unreadable.
+
+---
+
+## 7. Protocols and Network Services
+
+### DHCP — Dynamic Host Configuration Protocol
+
+**DHCP** automates the assignment of IP addresses to devices on a network. Without DHCP, every device would need a manually configured IP address.
+
+**DHCP DORA process:**
+
+| Step            | Direction                    | Description                                |
+| --------------- | ---------------------------- | ------------------------------------------ |
+| **D**iscover    | Client → Network (broadcast) | Client announces it needs an IP address    |
+| **O**ffer       | Server → Client              | DHCP server offers an available IP address |
+| **R**equest     | Client → Network (broadcast) | Client formally requests the offered IP    |
+| **A**cknowledge | Server → Client              | Server confirms the lease                  |
+
+DHCP also provides: subnet mask, default gateway, DNS server addresses, lease duration.
+
+**Security relevance:** **Rogue DHCP servers** — an attacker sets up a DHCP server that responds before the legitimate one, handing out attacker-controlled DNS and gateway settings. Victims are silently redirected. Defence: DHCP snooping on managed switches.
+
+### DNS — Domain Name System
+
+**DNS** translates human-readable domain names into IP addresses. Without DNS, every website visit would require typing an IP address.
+
+**DNS hierarchy:**
+
+```
+Root Servers (.)
+    └── Top-Level Domains (.com, .org, .net, .ng)
+            └── Second-Level Domains (example.com)
+                    └── Subdomains / Hostnames (www.example.com)
+```
+
+**DNS resolution process:**
+
+1. PC sends query to **Recursive DNS resolver** (usually provided by ISP or set manually e.g. 8.8.8.8)
+2. Recursive resolver queries **Root Server** — which TLD server to ask
+3. Root Server points to **TLD Server** (.com, .org etc.)
+4. TLD Server points to **Authoritative DNS Server** for the domain
+5. Authoritative server returns the IP address
+6. Recursive resolver caches and returns the answer to the client
+
+**Common DNS record types:**
+
+| Record | Purpose                                                |
+| ------ | ------------------------------------------------------ |
+| A      | Maps domain to IPv4 address                            |
+| AAAA   | Maps domain to IPv6 address                            |
+| MX     | Mail server for the domain                             |
+| CNAME  | Alias — points one domain to another                   |
+| TXT    | Text records — used for SPF, DKIM, domain verification |
+| NS     | Nameserver records — which servers are authoritative   |
+| PTR    | Reverse DNS — IP to domain name                        |
+
+**Security relevance:**
+
+- **DNS enumeration** — querying DNS records reveals subdomains, mail servers, and infrastructure during recon
+- **DNS zone transfer** — if misconfigured, an attacker can request a copy of the entire DNS zone, revealing all records at once (`dig axfr @nameserver domain.com`)
+- **DNS poisoning / cache poisoning** — injecting false DNS records into a resolver's cache, redirecting users to attacker-controlled IPs
+- **DNS tunnelling** — encoding data in DNS queries to exfiltrate data or bypass firewalls
+
+### Common Ports and Protocols
+
+Ports are numerical identifiers that direct traffic to the correct application on a device. Range: 0–65535.
+
+**Port categories:**
+
+| Range       | Name                        | Description                                                              |
+| ----------- | --------------------------- | ------------------------------------------------------------------------ |
+| 0–1023      | Well-Known Ports            | Reserved for common, universally recognized services — managed by IANA   |
+| 1024–49151  | Registered Ports            | Assigned to specific services by IANA but less strictly controlled       |
+| 49152–65535 | Dynamic/Private (Ephemeral) | Used by client applications temporarily when making outbound connections |
+
+**Essential ports to know:**
+
+| Port | Protocol | Service                            |
+| ---- | -------- | ---------------------------------- |
+| 21   | TCP      | FTP (File Transfer)                |
+| 22   | TCP      | SSH (Secure Shell)                 |
+| 23   | TCP      | Telnet (unencrypted remote access) |
+| 25   | TCP      | SMTP (email sending)               |
+| 53   | TCP/UDP  | DNS                                |
+| 80   | TCP      | HTTP                               |
+| 110  | TCP      | POP3 (email retrieval)             |
+| 143  | TCP      | IMAP (email retrieval)             |
+| 443  | TCP      | HTTPS                              |
+| 445  | TCP      | SMB (Windows file sharing)         |
+| 3306 | TCP      | MySQL                              |
+| 3389 | TCP      | RDP (Remote Desktop)               |
+| 5432 | TCP      | PostgreSQL                         |
+| 8080 | TCP      | HTTP alternate / web proxies       |
+
+**Security relevance:** During port scanning, open ports reveal what services are running. Each service is a potential entry point — especially if running an outdated version with a known CVE. Ports 22, 80, 443, 445, and 3389 are universally targeted in external scans.
+
+### NAT — Network Address Translation
+
+**NAT** allows multiple devices on a private network to share a single public IP address — solving the IPv4 exhaustion problem for internal networks.
+
+**How it works:** The router maintains a translation table mapping internal IP:port combinations to the single public IP. Outbound packets get the public IP substituted in; inbound responses are translated back to the internal address.
+
+**NAT types:**
+
+| Type                               | Description                                                                                              |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Static NAT**                     | One-to-one mapping — one private IP always maps to one public IP                                         |
+| **Dynamic NAT**                    | Pool of public IPs assigned dynamically as needed                                                        |
+| **PAT (Port Address Translation)** | Many-to-one — multiple private IPs share one public IP, differentiated by port. Also called NAT Overload |
+
+**Benefits:**
+
+- Conserves limited IPv4 address space
+- Provides basic layer of obscurity — internal IPs are not directly reachable from the internet
+- Flexible internal IP addressing schemes
+
+**Security relevance:** NAT is not a firewall — it provides obscurity, not protection. Internal devices initiating connections outbound can still be attacked via those connections. Attackers who gain internal access see the real private IP range regardless of NAT.
+
+---
+
+## Key Takeaways — Section 3
+
+- ARP maps IP addresses to MAC addresses at Layer 2 — it has no authentication, making it vulnerable to poisoning
+- ARP poisoning enables MitM attacks — encrypted protocols (HTTPS, SSH) are the only reliable protection once the network layer is compromised
+- DHCP automates IP assignment via DORA — rogue DHCP servers are a real LAN attack vector
+- DNS translates domain names to IPs through a hierarchy of resolvers — misconfigured DNS enables zone transfers and poisoning attacks
+- DNS enumeration is one of the first steps in external recon — subdomains, MX records, and NS records all reveal attack surface
+- Know your ports — 22, 80, 443, 445, 3389 are the most commonly targeted in external scans
+- NAT hides internal networks behind a single public IP — it is not a security control, it is an addressing solution
