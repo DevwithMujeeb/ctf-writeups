@@ -600,3 +600,227 @@ Essential tools for understanding network behaviour — used by both administrat
 - Firewalls filter traffic but NGFWs provide the most comprehensive protection through deep packet inspection and application awareness
 - IDS detects, IPS prevents — neither replaces fixing the underlying vulnerability
 - `ifconfig`, `netstat`, `ping`, `ip route`, `nmap`, and `nc` are the fundamental network diagnostic and reconnaissance tools — know them cold
+
+---
+
+## 11. How the Internet Works — End to End
+
+Understanding how a single web request travels from browser to server and back ties every concept in this module together. This is the mental model every penetration tester and security engineer needs to hold.
+
+### Browsing the Internet — Full Request Flow
+
+When you type `https://www.example.com/home.html` into a browser and hit enter, here is what actually happens:
+
+```
+1. DNS Lookup
+   Browser checks local cache → OS cache → Recursive resolver
+   Recursive resolver queries: Root → TLD (.com) → Authoritative NS
+   Returns: 93.184.216.34 (IP address for example.com)
+
+2. TCP Connection (Three-Way Handshake)
+   Client → Server: SYN
+   Server → Client: SYN-ACK
+   Client → Server: ACK
+   [Connection established on port 443]
+
+3. TLS Handshake (HTTPS)
+   Certificates exchanged, encryption negotiated
+   Symmetric session key established
+
+4. HTTP Request
+   GET /home.html HTTP/1.1
+   Host: www.example.com
+
+5. Data Encapsulation (down the stack)
+   Application layer  → HTTP request
+   Transport layer    → TCP segment (adds port numbers)
+   Internet layer     → IP packet (adds source/destination IP)
+   Network Access     → Ethernet frame (adds MAC addresses)
+
+6. NAT Translation
+   Router replaces private source IP with public IP
+   Records mapping in NAT table
+
+7. Routing
+   Packet hops across routers toward destination
+   Each router consults its routing table, forwards to next hop
+
+8. Server Receives and Processes
+   Decapsulation reverses the stack
+   Web server processes the HTTP request
+   Returns HTTP response with the requested resource
+
+9. Response Travels Back
+   Same process in reverse
+   NAT translates public IP back to private client IP
+
+10. Decapsulation and Display
+    Browser receives response
+    Renders HTML, CSS, JavaScript
+    Page displays
+```
+
+Every step in this flow is an opportunity for an attacker to intercept, manipulate, or disrupt. DNS poisoning hijacks step 1. MitM via ARP poisoning hijacks step 5. SSL stripping attacks target step 3. Port scanning probes step 2.
+
+### Data Encapsulation
+
+As data moves down the OSI stack from application to physical, each layer adds its own header (and sometimes trailer) — this is **encapsulation**:
+
+```
+Application   → Data
+Transport     → [TCP Header] + Data           = Segment
+Network       → [IP Header] + Segment         = Packet
+Data Link     → [Frame Header] + Packet + [FCS] = Frame
+Physical      → Bits transmitted over medium
+```
+
+On the receiving end, each layer strips its header as data moves up — this is **decapsulation**.
+
+**Security relevance:** Packet analysis tools like Wireshark work by capturing frames and decapsulating them layer by layer, letting analysts see exactly what was transmitted at every layer of the stack.
+
+---
+
+## 12. Module Key Takeaways
+
+Network Foundations is the bedrock of everything else in security. You cannot attack or defend what you don't understand. Every module from here on — penetration testing, Nmap, web attacks — assumes this knowledge.
+
+### How Everything Connects
+
+```
+Physical Medium (cables, Wi-Fi)
+        │
+        ▼
+Data Link Layer — MAC addresses, switches, ARP
+        │
+        ▼
+Network Layer — IP addresses, routers, subnetting
+        │
+        ▼
+Transport Layer — TCP/UDP, ports, connections
+        │
+        ▼
+Application Layer — HTTP, DNS, FTP, SSH, SMTP
+        │
+        ▼
+Security Controls — Firewalls, IDS/IPS, encryption
+```
+
+An attacker who gains access to any layer can potentially attack everything above it. A compromised switch can poison ARP. A router under attacker control can redirect all traffic. Physical access to a cable allows passive sniffing.
+
+### Core Principles
+
+- **Every device needs an address** — MAC at Layer 2 for local delivery, IP at Layer 3 for routed delivery
+- **Protocols have no memory of past interactions by default** — stateless protocols like UDP and DNS must be secured at the application layer
+- **Encryption is not optional** — unencrypted protocols (Telnet, FTP, HTTP) send credentials and data in plaintext across the wire. Always prefer SSH, SFTP, HTTPS
+- **Segmentation limits blast radius** — subnetting and VLANs prevent an attacker who compromises one segment from freely reaching others
+- **Open ports are open doors** — every listening service is an attack surface. Reduce exposure by closing unnecessary ports and services
+- **Default configurations are insecure** — default credentials, open ports, and permissive firewall rules are the first things an attacker checks
+
+### What This Means for Penetration Testing
+
+The network reconnaissance phase of a penetration test applies every concept from this module:
+
+1. **Scope definition** — identify IP ranges and subnets in scope using CIDR notation
+2. **Host discovery** — `ping` sweeps and ARP scans to find live hosts
+3. **Port scanning** — `nmap` to identify open ports and services per host
+4. **Service enumeration** — banner grabbing with `nc`, version detection with `nmap -sV`
+5. **DNS enumeration** — zone transfers, subdomain brute-forcing, record lookups
+6. **Traffic analysis** — Wireshark to capture and inspect packets if network access is available
+7. **Wireless assessment** — identify SSIDs, encryption protocols, and capture handshakes if in scope
+
+Every tool and technique in the CJCA path builds on the foundation laid here.
+
+---
+
+_Module completed July 2026 — HackTheBox Academy, Junior Cybersecurity Analyst path_
+
+---
+
+## 11. How It All Connects — Browsing the Internet
+
+Understanding how a simple browser request traverses all the layers and concepts covered in this module ties everything together. Here is what actually happens when you type `https://www.example.com/page` and hit Enter.
+
+### Step-by-Step: A Web Request from End to End
+
+**1. DNS Lookup**
+The browser needs to resolve `www.example.com` to an IP address. It checks its local cache first, then queries the recursive DNS resolver. The resolver walks the DNS hierarchy — root → TLD → authoritative — and returns the IP address. The browser now knows where to send the request.
+
+**2. Checking Local Network Configuration**
+The device checks its network interface configuration (`ifconfig`) to confirm it has a valid IP address, subnet mask, and default gateway — assigned either statically or via DHCP.
+
+**3. Routing the Packet**
+The device determines whether the destination IP is on the local subnet or needs to go through the default gateway. If remote, the packet is sent to the router.
+
+**4. ARP Resolution**
+Before sending the packet to the router, the device needs the router's MAC address. It checks its ARP cache. If not found, it broadcasts an ARP request. The router responds with its MAC address. The packet can now be addressed at Layer 2.
+
+**5. Data Encapsulation**
+The data travels down the network stack, gaining headers at each layer:
+
+```
+Application Layer  → HTTP/S request data
+Transport Layer    → TCP header (source/dest port, sequence numbers)
+Internet Layer     → IP header (source/dest IP address)
+Network Access     → Ethernet frame (source/dest MAC address)
+```
+
+**6. Transmission**
+The frame travels across the physical medium — Ethernet cable or Wi-Fi — to the router, which strips the frame, reads the IP header, consults its routing table, and forwards the packet toward the destination.
+
+**7. NAT Translation**
+The router replaces the private source IP with its public IP address and records the mapping in the NAT table. The packet continues across the internet.
+
+**8. Server Receives and Responds**
+The destination server receives the packet, decapsulates up through the stack, processes the HTTP request, and sends a response back through the same process in reverse.
+
+**9. Decapsulation and Display**
+The response arrives, NAT translates the destination back to the internal IP, the device decapsulates the frame layer by layer, and the browser renders the page.
+
+This entire process — DNS lookup, ARP resolution, DHCP assignment, IP routing, NAT translation, TCP handshake, HTTP exchange — happens in milliseconds every time you load a page. Every step is a potential point of attack.
+
+---
+
+## 12. Module Key Takeaways
+
+### The Security Mindset Applied to Networks
+
+A network engineer asks: _is traffic getting where it needs to go?_
+
+A security engineer asks: _where can traffic be intercepted, manipulated, or blocked — and what can an attacker do with it?_
+
+Every protocol covered in this module has a corresponding attack. ARP has poisoning. DNS has poisoning and enumeration. DHCP has rogue servers. Wi-Fi has WPA cracking. TCP has SYN floods. Unencrypted protocols have sniffing. The pattern is consistent: protocols designed for functionality, not security, become attack vectors.
+
+### The Stack Is the Map
+
+```
+Layer 7 — Application     XSS, SQLi, HTTP exploits, DNS poisoning
+Layer 6 — Presentation    SSL/TLS attacks, weak encryption
+Layer 5 — Session         Session hijacking
+Layer 4 — Transport       Port scanning, SYN floods, firewall evasion
+Layer 3 — Network         IP spoofing, routing attacks, ICMP exploits
+Layer 2 — Data Link       ARP poisoning, MAC spoofing, VLAN hopping
+Layer 1 — Physical        Cable tapping, rogue access points
+```
+
+During a penetration test, understanding which layer a vulnerability lives on tells you which tool to reach for. Nmap operates at Layers 3 and 4. ARP spoofing tools operate at Layer 2. Application scanners like Burp Suite operate at Layer 7.
+
+### Core Principles
+
+- **Every protocol is a potential attack vector** — understand the protocol, understand the attack
+- **Encryption is the last line of defence on a compromised network** — if an attacker controls Layer 2, they can intercept everything that isn't encrypted
+- **Segmentation limits blast radius** — subnets, VLANs, and firewalls contain lateral movement after initial compromise
+- **DNS is infrastructure** — controlling DNS means controlling where traffic goes
+- **Know your ports** — open ports are open doors; every unnecessary service is unnecessary attack surface
+- **Defence in depth** — no single control is sufficient; firewalls, IDS/IPS, encryption, segmentation, and monitoring work together
+
+### What This Module Enables
+
+With these foundations in place, every subsequent module builds on them:
+
+- **Network Enumeration With Nmap** — applies port scanning, service detection, and OS fingerprinting directly to the concepts of TCP/IP, ports, and protocols
+- **Penetration Testing** — reconnaissance, scanning, and exploitation all require understanding how networks move data
+- **Machine writeups** — every HTB machine involves network services running on specific ports; knowing what those services are and how they communicate is the starting point of every attack chain
+
+---
+
+_Module completed July 2026 — HackTheBox Academy, Junior Cybersecurity Analyst path_
