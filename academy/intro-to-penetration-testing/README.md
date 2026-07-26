@@ -260,3 +260,214 @@ This shapes the testing approach — a bank faces different realistic threats th
 - Scope creep into out-of-scope systems — even accidentally — has legal consequences; always verify before touching anything new
 - The Statement of Work is the binding contract; the NDA protects both parties
 - Threat modelling before testing shapes the approach — who realistically attacks this client, and how?
+
+---
+
+## 7. The Penetration Testing Methodology
+
+A penetration test follows a structured sequence of phases. Each phase builds on the previous one — you cannot exploit what you haven't enumerated, and you cannot enumerate what you haven't discovered.
+
+```
+Pre-Engagement
+     │
+     ▼
+Reconnaissance / Information Gathering
+     │
+     ▼
+Scanning & Enumeration
+     │
+     ▼
+Vulnerability Assessment
+     │
+     ▼
+Exploitation
+     │
+     ▼
+Post-Exploitation
+     │
+     ▼
+Reporting
+```
+
+---
+
+## 8. Phase 1 — Reconnaissance / Information Gathering
+
+**Reconnaissance** is the process of collecting as much information about the target as possible before active testing begins. The more you know about the target, the more targeted and effective your attack surface mapping will be.
+
+Reconnaissance is divided into two types:
+
+### Passive Reconnaissance (OSINT)
+
+Gathering information without directly interacting with the target. Uses publicly available sources — the target never knows you are looking.
+
+**Sources:**
+
+- **WHOIS** — domain registration information, registrant details, nameservers
+- **DNS records** — A, MX, NS, TXT, CNAME records revealing infrastructure
+- **Google Dorking** — advanced search operators to find exposed files, login pages, sensitive information indexed by Google
+- **Shodan / Censys** — search engines for internet-connected devices — reveals open ports, services, and banners without scanning the target directly
+- **LinkedIn / social media** — employee names, job titles, technologies used (job postings reveal tech stack)
+- **GitHub / GitLab** — leaked credentials, API keys, internal code accidentally pushed to public repositories
+- **Wayback Machine** — archived versions of websites revealing old endpoints, technologies, and content
+- **Certificate Transparency logs** — reveals subdomains via SSL certificate history (`crt.sh`)
+- **theHarvester** — automated OSINT tool for emails, subdomains, IPs from public sources
+
+**Key OSINT principle:** Every piece of public information is a potential attack vector. Job postings that list specific software versions, LinkedIn profiles that reveal internal team structure, and GitHub commits that expose API keys are all real findings from real engagements.
+
+### Active Reconnaissance
+
+Directly interacting with the target systems to gather information. The target may detect this activity.
+
+**Techniques:**
+
+- **DNS enumeration** — querying DNS for records, attempting zone transfers
+- **Port scanning** — identifying open ports and services (Nmap)
+- **Web crawling** — spidering web applications for endpoints, parameters, and content
+- **Banner grabbing** — connecting to services to read their version banners
+
+```bash
+# DNS zone transfer attempt
+dig axfr @<nameserver> <domain>
+
+# Subdomain enumeration
+gobuster dns -d <domain> -w /usr/share/wordlists/SecLists/Discovery/DNS/subdomains-top1million-5000.txt
+
+# Banner grabbing with netcat
+nc <target IP> 80
+HEAD / HTTP/1.0
+```
+
+---
+
+## 9. Phase 2 — Scanning & Enumeration
+
+Once the attack surface is mapped, scanning and enumeration go deeper — identifying exactly what is running, what version it is, and how it is configured.
+
+### Network Scanning with Nmap
+
+**Nmap** is the primary tool for network scanning. It identifies open ports, running services, service versions, and operating systems.
+
+**Essential Nmap scan types:**
+
+```bash
+# Host discovery — which hosts are alive
+nmap -sn 192.168.1.0/24
+
+# SYN scan — stealthy, fast, requires root
+nmap -sS <target IP>
+
+# Full TCP connect scan — no root required
+nmap -sT <target IP>
+
+# UDP scan — slower, identifies UDP services
+nmap -sU <target IP>
+
+# Service and version detection
+nmap -sV <target IP>
+
+# OS fingerprinting
+nmap -O <target IP>
+
+# Aggressive scan — OS, version, scripts, traceroute
+nmap -A <target IP>
+
+# Specific port scan
+nmap -p 22,80,443,445,3389 <target IP>
+
+# All ports
+nmap -p- <target IP>
+
+# Script scan — NSE scripts
+nmap --script smb-enum-shares,smb-vuln-ms17-010 <target IP>
+```
+
+**Host enumeration — after discovering a host:**
+
+After scanning, for each discovered host we want to gather:
+
+- Open ports — what is listening
+- Service versions — what software and version is running
+- Information — OS, hostname, domain membership
+- Operational status — is the service actually functional
+
+**There are two port states of particular importance:**
+
+- **Open** — actively accepting connections — a service is running
+- **Filtered** — a firewall is blocking the probe — the port may or may not be open
+
+### Service Enumeration
+
+After identifying open ports, enumerate each service specifically:
+
+**SMB Enumeration (port 445)**
+
+```bash
+# List shares
+smbclient -L //<target IP> -N
+
+# Enumerate with enum4linux
+enum4linux -a <target IP>
+
+# Nmap SMB scripts
+nmap --script smb-enum-shares,smb-enum-users,smb-os-discovery <target IP>
+```
+
+**HTTP/HTTPS Enumeration (ports 80/443)**
+
+```bash
+# Directory brute-forcing
+gobuster dir -u http://<target IP> -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
+
+# Nikto web vulnerability scanner
+nikto -h http://<target IP>
+
+# whatweb — identify technologies
+whatweb http://<target IP>
+```
+
+**FTP Enumeration (port 21)**
+
+```bash
+# Test anonymous login
+ftp <target IP>
+# Username: anonymous
+# Password: (blank)
+```
+
+**SNMP Enumeration (port 161 UDP)**
+
+```bash
+snmpwalk -v2c -c public <target IP>
+```
+
+**SSH Enumeration (port 22)**
+
+```bash
+# Banner grab
+nc <target IP> 22
+
+# Check supported auth methods
+ssh -v user@<target IP>
+```
+
+### Vulnerability Identification
+
+After enumeration, map findings to known vulnerabilities:
+
+- Check service versions against CVE databases (NVD, Exploit-DB)
+- Run Nmap NSE vulnerability scripts
+- Use automated scanners (Nessus, OpenVAS) for comprehensive coverage
+- Search Metasploit for available modules: `search <service name>`
+
+---
+
+## Key Takeaways — Section 3
+
+- Reconnaissance comes before everything — the more you know before active testing, the more targeted and effective your attacks
+- Passive recon (OSINT) leaves no trace on the target — always exhaust passive sources before going active
+- GitHub is consistently one of the highest-yield OSINT sources — leaked credentials and API keys appear regularly
+- Nmap is the foundation of network scanning — know the key flags (`-sS`, `-sV`, `-O`, `-A`, `-p-`) and when to use each
+- Enumeration is not scanning — scanning finds open ports, enumeration pulls specific information from those services
+- Every open port is a question — what is running, what version, does it have known vulnerabilities, can I authenticate to it
+- Map service versions to CVEs before attempting manual exploitation — public exploits often exist and save significant time
