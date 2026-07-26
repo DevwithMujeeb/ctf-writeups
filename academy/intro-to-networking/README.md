@@ -108,3 +108,175 @@ Every tool in a pentester's toolkit operates at one or more of these layers. Und
 - Data changes form (data → segment → packet → frame → bits) as it moves down the OSI stack through encapsulation
 - Decapsulation reverses the process at the receiver — each layer reads its header and strips it before passing up
 - The TCP/IP model is the practical implementation — 4 layers covering what OSI splits into 7
+
+---
+
+## 3. TCP — Transmission Control Protocol
+
+TCP is a **connection-oriented protocol** that establishes a virtual connection between two devices before any data is transmitted. It guarantees reliable, ordered, and error-checked delivery of data.
+
+### The Three-Way Handshake
+
+Every TCP connection begins with a three-way handshake:
+
+```
+Client                    Server
+  |                          |
+  |-------- SYN ----------->|   Client requests connection
+  |                          |
+  |<------ SYN-ACK ---------|   Server acknowledges and responds
+  |                          |
+  |-------- ACK ----------->|   Client confirms
+  |                          |
+  |    [Connection Open]     |
+```
+
+After the handshake, data transfer begins. When the session ends, a **four-way termination** occurs (FIN → ACK → FIN → ACK).
+
+### TCP Header Fields
+
+Key fields in a TCP header that matter for security:
+
+| Field                  | Size    | Purpose                                  |
+| ---------------------- | ------- | ---------------------------------------- |
+| Source Port            | 16 bits | Originating port                         |
+| Destination Port       | 16 bits | Target port                              |
+| Sequence Number        | 32 bits | Tracks byte ordering                     |
+| Acknowledgement Number | 32 bits | Next expected byte                       |
+| Flags                  | 9 bits  | SYN, ACK, FIN, RST, PSH, URG             |
+| Window Size            | 16 bits | Flow control — how much data can be sent |
+| Checksum               | 16 bits | Error detection                          |
+
+### TCP Flags
+
+TCP flags control the state of a connection. Each is a single bit — set (1) or unset (0):
+
+| Flag    | Name        | Purpose                                                |
+| ------- | ----------- | ------------------------------------------------------ |
+| **SYN** | Synchronize | Initiates a connection                                 |
+| **ACK** | Acknowledge | Confirms receipt                                       |
+| **FIN** | Finish      | Gracefully closes a connection                         |
+| **RST** | Reset       | Abruptly terminates a connection                       |
+| **PSH** | Push        | Tells receiver to pass data to application immediately |
+| **URG** | Urgent      | Marks data as urgent                                   |
+
+**Security relevance:** Nmap uses TCP flags to perform different scan types:
+
+- **SYN scan (`-sS`)** — sends SYN, never completes the handshake. Stealthy — no full connection logged
+- **Connect scan (`-sT`)** — completes the full handshake. Louder but works without root privileges
+- **FIN/NULL/XMAS scans** — send unusual flag combinations to probe firewall behaviour
+- **RST packets** — a RST response to a SYN means the port is closed; no response may mean filtered
+
+### TCP Reliability Mechanisms
+
+- **Sequence numbers** — ensure data is reassembled in the correct order even if packets arrive out of sequence
+- **Acknowledgements** — receiver confirms each segment; sender retransmits if no ACK received within timeout
+- **Flow control** — window size prevents the sender from overwhelming the receiver
+- **Congestion control** — TCP slows transmission when network congestion is detected
+
+**Attack relevance:** TCP sequence number prediction was historically used for **session hijacking** — guessing the next sequence number to inject data into an established connection. Modern OS implementations use randomised initial sequence numbers (ISN) to prevent this.
+
+---
+
+## 4. UDP — User Datagram Protocol
+
+UDP is a **connectionless protocol** — it sends data packets to the destination without establishing a connection first and without checking whether they were received.
+
+```
+Client                    Server
+  |                          |
+  |-------- Data ----------->|   Sent. No handshake. No confirmation.
+  |                          |
+```
+
+### TCP vs UDP — Full Comparison
+
+| Feature        | TCP                     | UDP                      |
+| -------------- | ----------------------- | ------------------------ |
+| Connection     | Connection-oriented     | Connectionless           |
+| Reliability    | Guaranteed delivery     | No guarantee             |
+| Ordering       | Ordered                 | Unordered                |
+| Error checking | Yes (retransmission)    | Checksum only            |
+| Speed          | Slower                  | Faster                   |
+| Header size    | 20–60 bytes             | 8 bytes                  |
+| Use cases      | HTTP/S, SSH, FTP, email | DNS, VoIP, video, gaming |
+
+### When UDP Is the Right Choice
+
+UDP is chosen when speed matters more than reliability:
+
+- **DNS** — a single request/response; retrying is faster than establishing a TCP connection
+- **VoIP** — a dropped packet in a phone call is better than a delayed one
+- **Video streaming** — minor packet loss is acceptable; buffering is not
+- **Online gaming** — low latency is critical; reliability is handled at the application layer
+
+### Security Relevance of UDP
+
+- **UDP port scanning** — harder than TCP scanning. Closed UDP ports return ICMP "port unreachable"; open ports often return nothing, making results ambiguous
+- **UDP amplification attacks** — attacker sends small UDP requests with a spoofed source IP (victim's IP) to servers that return large responses (DNS, NTP, SSDP). The victim receives massive traffic they never requested
+- **DNS over UDP** — DNS queries use UDP by default (port 53). DNS poisoning exploits the lack of authentication in UDP-based DNS responses
+
+---
+
+## 5. ICMP — Internet Control Message Protocol
+
+**ICMP** is a protocol used by network devices to communicate error reporting and status information. It operates at Layer 3 (Network layer) and is used by routers and hosts to send diagnostic and control messages.
+
+ICMP does not carry application data — it carries messages about the network itself.
+
+### Common ICMP Message Types
+
+| Type | Code | Message                 | Meaning                                        |
+| ---- | ---- | ----------------------- | ---------------------------------------------- |
+| 0    | 0    | Echo Reply              | Response to a ping                             |
+| 3    | 0–15 | Destination Unreachable | Packet could not be delivered                  |
+| 3    | 1    | Host Unreachable        | Target host not reachable                      |
+| 3    | 3    | Port Unreachable        | UDP port closed (used by UDP scan results)     |
+| 5    | 0    | Redirect                | Router telling host to use a different gateway |
+| 8    | 0    | Echo Request            | Ping — are you there?                          |
+| 11   | 0    | Time Exceeded           | TTL expired in transit (used by traceroute)    |
+
+### ping
+
+`ping` uses ICMP Echo Request (Type 8) and Echo Reply (Type 0) to test reachability:
+
+```bash
+ping -c 4 <target IP>
+```
+
+**TTL (Time To Live)** in the reply reveals OS hints:
+
+- Linux/Unix default TTL: **64**
+- Windows default TTL: **128**
+- Cisco network devices: **255**
+
+Each router hop decrements TTL by 1. If TTL reaches 0, the packet is discarded and an ICMP Time Exceeded message is sent back — this is how `traceroute` works.
+
+### traceroute
+
+`traceroute` sends packets with incrementally increasing TTL values, forcing each router along the path to send back ICMP Time Exceeded messages — revealing the full path to the destination:
+
+```bash
+traceroute <target IP>          # Linux
+tracert <target IP>             # Windows
+```
+
+### Security Relevance of ICMP
+
+- **ICMP sweep (ping sweep)** — sending Echo Requests to a range of IPs to discover live hosts. Nmap: `nmap -sn 192.168.1.0/24`
+- **ICMP blocking** — many firewalls block ICMP. A host not responding to ping doesn't mean it's down — it may be filtering ICMP. Always combine ping sweeps with TCP/UDP scans
+- **ICMP tunnelling** — encodes data inside ICMP packets to exfiltrate data or bypass firewalls that only filter TCP/UDP
+- **ICMP redirect attacks** — forged ICMP redirect messages can manipulate routing tables on hosts, redirecting traffic through an attacker-controlled gateway
+
+---
+
+## Key Takeaways — Section 2
+
+- TCP is reliable and connection-oriented — the three-way handshake (SYN → SYN-ACK → ACK) establishes every connection
+- TCP flags (SYN, ACK, FIN, RST) control connection state — Nmap exploits these for different scan types
+- UDP is fast and connectionless — no handshake, no acknowledgement, no ordering guarantee
+- UDP amplification attacks use the connectionless nature of UDP to flood victims with reflected traffic
+- ICMP carries network control messages, not application data — ping and traceroute are built on it
+- TTL values in ICMP replies hint at the OS — 64 is Linux, 128 is Windows
+- ICMP blocking is common — a non-responsive host is not necessarily down; always use multiple discovery methods
+- ICMP tunnelling is a real exfiltration and C2 technique — encrypted traffic in ICMP is harder to detect
