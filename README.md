@@ -1,35 +1,42 @@
 # CTF Writeups
 
-My personal collection of HackTheBox writeups, Academy module notes, and reusable enumeration methodology — documented as I progress through the platform.
-
-> **Note:** Machine writeups are only published for **retired** machines, in line with HackTheBox's spoiler policy.
+A public repository documenting my journey through the HackTheBox Academy Junior Cybersecurity Analyst (CJCA) certification path — module notes, machine writeups, and reusable methodology.
 
 ---
 
 ## Structure
 
-<pre>
+```
 ctf-writeups/
-├── academy/                    # HackTheBox Academy module notes
+├── academy/                          # HackTheBox Academy module notes
+│   ├── intro-to-information-security/
+│   ├── network-foundations/
+│   ├── intro-to-networking/
 │   ├── linux-fundamentals/
-│   ├── networking-fundamentals/
-│   └── web-requests/
-├── machines/                   # Retired machine writeups
+│   ├── web-requests/
+│   ├── intro-to-web-applications/
+│   └── intro-to-penetration-testing/
+├── machines/                         # Retired machine writeups
 │   ├── easy/
 │   ├── medium/
 │   └── hard/
-└── methodology/                # Reusable enumeration checklists
-</pre>
+└── methodology/                      # Reusable enumeration checklists
+```
 
 ---
 
 ## Academy Notes
 
-| Module                                                       | Status       |
-| ------------------------------------------------------------ | ------------ |
-| [Linux Fundamentals](./academy/linux-fundamentals/README.md) | ✅ Completed |
-| Networking Fundamentals                                      | ✅ Completed |
-| [Web Requests](./academy/web-requests/README.md)             | ✅ Completed |
+| Module                                                                                    | Status         |
+| ----------------------------------------------------------------------------------------- | -------------- |
+| [Introduction To Information Security](./academy/intro-to-information-security/README.md) | ✅ Completed   |
+| [Network Foundations](./academy/network-foundations/README.md)                            | ✅ Completed   |
+| [Introduction To Networking](./academy/intro-to-networking/README.md)                     | ✅ Completed   |
+| [Linux Fundamentals](./academy/linux-fundamentals/README.md)                              | ✅ Completed   |
+| [Web Requests](./academy/web-requests/README.md)                                          | ✅ Completed   |
+| [Introduction To Web Applications](./academy/intro-to-web-applications/README.md)         | ✅ Completed   |
+| [Introduction To Penetration Testing](./academy/intro-to-penetration-testing/README.md)   | ✅ Completed   |
+| Network Enumeration With Nmap                                                             | 🔄 In Progress |
 
 ---
 
@@ -47,23 +54,4 @@ Reusable enumeration checklists and approach notes live in the [`methodology/`](
 
 ---
 
-## Approach
-
-Every writeup follows the same structure:
-
-1. **Reconnaissance** — what the target exposes
-2. **Enumeration** — digging into what recon found
-3. **Exploitation** — how access was gained
-4. **Post-exploitation** — privilege escalation path
-5. **Key takeaways** — what this machine taught, what to remember next time
-
-This isn't just a flag dump — the goal is to document _thinking_, not just _commands_.
-
----
-
-[![HackTheBox](https://img.shields.io/badge/Platform-HackTheBox-9FEF00?style=flat&logo=hackthebox&logoColor=black)](https://www.hackthebox.com)
-[![Profile](https://img.shields.io/badge/HTB-DevwithMujeeb-9FEF00?style=flat&logo=hackthebox&logoColor=black)](https://app.hackthebox.com/profile/DevwithMujeeb)
-
----
-
-Part of a public 90-day build-in-public challenge by [DevwithMujeeb](https://github.com/DevwithMujeeb).
+_HackTheBox Academy — Junior Cybersecurity Analyst (CJCA) path | 7/20 modules completed_
