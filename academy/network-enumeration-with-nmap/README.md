@@ -609,3 +609,169 @@ sudo nmap --script-updatedb
 - NSE has 14 script categories — `default` and `safe` are non-intrusive; `exploit`, `dos`, and `intrusive` can cause damage
 - Always use `-sC` (default scripts) as part of standard enumeration — it adds significant value with minimal noise
 - SMB scripts (especially `smb-vuln-ms17-010`) and HTTP scripts are the highest-yield NSE scripts in most engagements
+
+---
+
+## 11. Firewall and IDS/IPS Evasion
+
+One of Nmap's most valuable capabilities beyond basic scanning is its ability to evade detection by firewalls and intrusion detection/prevention systems. Understanding these techniques is essential both for offensive work — getting accurate results through security controls — and for defensive work — knowing what attackers can do to bypass your defences.
+
+Nmap gives us many different ways to bypass firewall rules and IDS/IPS. These methods include fragmentation of packets and the use of decoys.
+
+### Why Evasion Is Necessary
+
+Firewalls and IDS/IPS systems can:
+
+- Block or filter Nmap probes — causing ports to appear filtered when they are actually open
+- Detect and alert on scanning activity — triggering incident response
+- Block the scanner's IP address entirely after detecting a scan
+
+Evasion techniques allow a tester to get accurate results while reducing the signature of the scan.
+
+### Packet Fragmentation
+
+Splitting Nmap probe packets into smaller fragments makes them harder for IDS/IPS systems to reassemble and inspect:
+
+```bash
+# Fragment packets into 8-byte chunks
+sudo nmap 10.129.2.28 -f
+
+# Specify fragment size (must be multiple of 8)
+sudo nmap 10.129.2.28 --mtu 16
+
+# Double fragmentation
+sudo nmap 10.129.2.28 -ff
+```
+
+Many older IDS/IPS systems cannot reassemble fragmented packets fast enough to inspect them — the fragments pass through individually without triggering signatures.
+
+### Decoys
+
+Decoys make it appear that multiple hosts are scanning the target simultaneously — making it difficult to determine which IP is the real attacker:
+
+```bash
+# Use specific decoy IPs
+sudo nmap 10.129.2.28 -D 10.10.10.1,10.10.10.2,10.10.10.3
+
+# Use random decoys (RND generates random IPs)
+sudo nmap 10.129.2.28 -D RND:10
+
+# Specify attacker position in decoy list (ME)
+sudo nmap 10.129.2.28 -D 10.10.10.1,10.10.10.2,ME,10.10.10.3
+```
+
+Decoys work by spoofing the source IP in packets — target logs show traffic from multiple sources, making attribution difficult.
+
+**Important:** Decoy IPs must be alive on the network — if decoys are dead hosts, a sophisticated IDS can identify them as spoofed by noting that only one IP (the real attacker) completes the TCP handshake.
+
+### Source Port Manipulation
+
+Some firewalls allow traffic from trusted ports (like 53/DNS or 80/HTTP). Spoofing the source port can bypass these rules:
+
+```bash
+# Use source port 53 (DNS) to bypass firewall rules
+sudo nmap 10.129.2.28 --source-port 53
+
+# Combined with SYN scan
+sudo nmap 10.129.2.28 -sS --source-port 53
+```
+
+### Spoofing Source IP and MAC
+
+```bash
+# Spoof source IP address
+sudo nmap 10.129.2.28 -S 10.10.10.200
+
+# Spoof MAC address
+sudo nmap 10.129.2.28 --spoof-mac 0
+```
+
+**Note:** IP spoofing means you will not receive responses — only useful when combined with sniffing on the same network segment or when responses are not needed (e.g. SYN floods for DoS testing).
+
+### Idle/Zombie Scan (`-sI`)
+
+The most stealthy scan type — uses a third-party "zombie" host to send probes. The attacker never sends packets directly to the target:
+
+```bash
+sudo nmap 10.129.2.28 -sI <zombie host IP>
+```
+
+The zombie must be idle (generating minimal traffic) and use predictable IP ID incrementation.
+
+### Slow and Low Scans
+
+Reducing scan speed to blend into normal network noise:
+
+```bash
+# Paranoid timing — one probe every 5 minutes
+sudo nmap 10.129.2.28 -T0
+
+# Random scan order — avoids sequential port scanning signatures
+sudo nmap 10.129.2.28 --randomize-hosts
+
+# Insert random delays between probes
+sudo nmap 10.129.2.28 --scan-delay 5s
+```
+
+### DNS Evasion
+
+```bash
+# Use a specific DNS server for resolution
+sudo nmap 10.129.2.28 --dns-servers 8.8.8.8
+
+# Disable reverse DNS lookup (reduces noise)
+sudo nmap 10.129.2.28 -n
+```
+
+### Combining Evasion Techniques
+
+In a professional engagement against a hardened target:
+
+```bash
+sudo nmap 10.129.2.28 \
+  -sS \
+  -p 80,443,22,445 \
+  -T1 \
+  -f \
+  -D RND:5 \
+  --source-port 53 \
+  -n \
+  --scan-delay 2s \
+  -oA evasive_scan
+```
+
+This combines: SYN scan, specific ports, slow timing, fragmentation, 5 random decoys, source port spoofing, no DNS resolution, and scan delay.
+
+---
+
+## 12. Scanning Through Proxies and Pivoting
+
+Once inside a network through a compromised host, Nmap can be used to scan internal segments that are not directly reachable:
+
+```bash
+# Route Nmap through a SOCKS proxy
+proxychains nmap -sT -Pn 192.168.1.0/24
+
+# Note: proxychains only works with TCP connect scans (-sT)
+# SYN scans require raw socket access which proxychains cannot proxy
+```
+
+**Port forwarding for specific services:**
+
+```bash
+# Forward remote port to local for direct tool access
+ssh -L 8080:192.168.1.10:80 user@<pivot host>
+```
+
+---
+
+## Key Takeaways — Section 4
+
+- Firewalls and IDS/IPS can filter, block, or alert on Nmap scans — evasion techniques get accurate results through security controls
+- Packet fragmentation splits probes into smaller chunks — older IDS systems cannot reassemble them fast enough to inspect
+- Decoys flood target logs with multiple source IPs — attribution becomes difficult, but decoys must be alive hosts
+- Source port spoofing (`--source-port 53`) bypasses firewall rules that allow DNS traffic
+- The idle/zombie scan is the most stealthy technique — the attacker's IP never appears in target logs
+- Slow timing (`-T0`, `--scan-delay`) blends scan traffic into normal network noise
+- Evasion techniques are cumulative — combining fragmentation, decoys, slow timing, and source port spoofing is more effective than any single technique
+- `proxychains nmap` enables scanning of internal networks through a compromised pivot host — TCP connect scans only
