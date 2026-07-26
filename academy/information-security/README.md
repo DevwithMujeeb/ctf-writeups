@@ -507,3 +507,165 @@ Authentication is based on one or more of three factors:
 - Incident response has six phases — preparation is the most important because you cannot improvise an effective response during an active incident
 - Authentication verifies identity — MFA is the single most impactful control against credential-based attacks
 - SMS-based 2FA is vulnerable to SIM swapping — authenticator apps and hardware keys are the stronger alternatives
+
+---
+
+## 8. Security Teams
+
+Modern organisations structure their security operations around specialised teams — each with a distinct role in the overall security posture. Understanding these teams is essential for knowing where you fit in the security landscape and how offensive and defensive work complement each other.
+
+### Red Team
+
+A **Red Team** is a specialised group of cybersecurity professionals who simulate real-world attacks on an organisation's systems, networks, and even its people — with the aim of identifying vulnerabilities before malicious actors do.
+
+**Key characteristics:**
+
+- Offensive — they think and act like attackers
+- Authorised — all activity is legally sanctioned
+- Goal-oriented — typically given a specific objective (access the domain controller, exfiltrate a target file, reach a specific network segment)
+- Realistic — use the same tools, techniques, and procedures (TTPs) as real threat actors
+
+**Key functions:**
+
+- Ethical hacking
+- Identifying security flaws
+- Reporting findings with proof-of-concept
+- Continuous learning — staying current with attacker TTPs
+
+Red teamers operate on networks or web apps but without malicious intent.
+
+### Blue Team
+
+The **Blue Team** serves as the frontline defence in cybersecurity — comprising a diverse group of specialists who collaborate to protect an organisation's digital infrastructure.
+
+**Blue Team composition:**
+
+| Role                    | Responsibility                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| **Security Analysts**   | Monitor networks and systems for anomalies and suspicious activity                               |
+| **Incident Responders** | Spring into action when security breaches occur — contain the threat and work to mitigate damage |
+| **Threat Hunters**      | Proactively search for threats that evade automated detection                                    |
+| **Security Engineers**  | Design, implement, and maintain robust security measures — building and reinforcing the defences |
+
+The Blue Team operates continuously — 24/7 monitoring in mature organisations through a Security Operations Center (SOC).
+
+### Purple Team
+
+The **Purple Team** is Red + Blue Team integration — not a separate permanent team in most organisations, but a collaborative exercise where both teams work together simultaneously.
+
+**Purple Team composition:**
+
+- Penetration Testers / Ethical Hackers
+- Incident Responders / Security Analysts
+
+**Purpose:**
+
+- Improve security defences by sharing attacker knowledge directly with defenders
+- Enhance detection and response — Blue Team learns what Red Team did and builds detections for it
+- Encourage continuous improvement — each engagement makes both teams better
+
+Purple teaming closes the feedback loop: attackers share their methods, defenders tune their tools to catch those methods, both sides iterate.
+
+### Threat Actors
+
+Understanding who is attacking matters as much as understanding how they attack. **Threat Actors** are organised groups of individuals with specialised skills collaborating to carry out cyber offensives.
+
+| Actor Type             | Motivation                        | Sophistication                                         |
+| ---------------------- | --------------------------------- | ------------------------------------------------------ |
+| **Script Kiddies**     | Recognition, curiosity            | Low — use existing tools without understanding them    |
+| **Hacktivists**        | Ideological, political            | Medium — targeted but not always technically advanced  |
+| **Cybercriminals**     | Financial gain                    | Medium to High — organised, use RaaS, operate at scale |
+| **Insider Threats**    | Financial, grievance, coercion    | Varies — but have privileged access                    |
+| **Nation-State / APT** | Espionage, sabotage, geopolitical | Very High — unlimited resources, long-term operations  |
+
+Aims of threat actors: to infiltrate and exploit to gain access to systems or networks, with motivations ranging from financial gain to causing widespread damage.
+
+---
+
+## 9. Job Roles in Information Security
+
+### 1. Chief Information Security Officer (CISO)
+
+A senior-level executive dedicated to safeguarding an organisation's information assets and technologies.
+
+- Oversees the entire information security program
+- Sets overall security strategy and policy
+- Reports to the C-suite and board
+- Responsible for regulatory compliance and risk management at the organisational level
+
+### 2. Penetration Tester
+
+A cybersecurity professional who acts like a malicious hacker to find vulnerabilities in an organisation's computer systems, networks, and web applications — but without the malicious intent.
+
+- Identifies vulnerabilities through simulated attacks
+- Actively looks for and exploits vulnerabilities within a system legally and ethically
+- Produces detailed reports with findings, proof-of-concept, and remediation recommendations
+- Continuous learning — attacker TTPs evolve constantly
+
+### 3. Security Architect
+
+Designs secure systems and networks — creates the systems that penetration testers will attempt to break.
+
+- Designs the overall security structure of applications and their supporting infrastructure
+- Responsible for security-by-design principles being embedded from the start
+- Works closely with development and infrastructure teams
+
+### 4. Incident Response Specialist
+
+Manages and responds to security incidents — often works in tandem with penetration testers by responding to their attacks during exercises.
+
+- First responder when a breach occurs
+- Contains the threat, eradicates it, and restores operations
+- Documents the incident for lessons-learned and legal purposes
+
+### 5. Security Analyst
+
+Monitors systems for threats and analyses security data — may work within a SOC or as part of an internal security team.
+
+- Monitors network and systems for anomalies and suspicious activity
+- Analyses logs, alerts, and threat intelligence
+- Escalates confirmed incidents to incident responders
+
+### 6. Security Operations Center (SOC)
+
+A centralised unit that acts as the core of an organisation's cybersecurity operations. A place where skilled professionals work continuously to monitor, detect, analyse, and respond to cyberthreats and security incidents.
+
+**SOC tiers:**
+
+- **Tier 1 — Triage Analyst** — monitors alerts, determines severity, escalates
+- **Tier 2 — Incident Responder** — investigates escalated alerts, performs deeper analysis
+- **Tier 3 — Threat Hunter / Senior Analyst** — proactive hunting, advanced forensics, threat intelligence
+
+**SOC tools:** SIEM, EDR, threat intelligence platforms, ticketing systems, forensics tools.
+
+### 7. Bug Bounty Hunter
+
+Skilled cybersecurity professionals who operate independently to uncover vulnerabilities in various digital assets belonging to organisations — including software applications and complex network systems.
+
+- Work independently, not as employees
+- Paid per valid vulnerability found (bounty)
+- Scope defined by the organisation's bug bounty program
+- Platforms: HackerOne, Bugcrowd, Intigriti, Synack
+
+Bug bounty hunting is one of the most accessible entry points into offensive security — anyone can participate in public programs with no prior employment required.
+
+### 8. Compliance Specialist
+
+Ensures the organisation adheres to relevant security regulations, standards, and frameworks.
+
+- Frameworks: ISO 27001, NIST CSF, SOC 2, PCI-DSS, GDPR, HIPAA
+- Bridges security and legal/regulatory requirements
+- Conducts audits and assessments
+
+---
+
+## Key Takeaways — Section 4
+
+- Red Team attacks, Blue Team defends, Purple Team integrates both — all three are necessary for a mature security program
+- Red Team engagements simulate real threat actor TTPs — the goal is to find what a real attacker would find before they do
+- Blue Team operates continuously — SOC tiers escalate from alert triage (Tier 1) through incident response (Tier 2) to threat hunting (Tier 3)
+- Nation-state APTs are the most sophisticated threat actors — unlimited resources, long-term operations, targeted and stealthy
+- The CISO is the organisational owner of security strategy — every security decision ultimately ties back to risk management at the executive level
+- Penetration testers and bug bounty hunters do the same work with different employment models — both are legitimate career paths
+- Security Analysts and Incident Responders are the most in-demand entry-level roles in the industry — the SOC is where most practitioners start
+- Understanding all roles helps you navigate where you want to specialise and how each role interacts with the others
