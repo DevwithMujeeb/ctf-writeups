@@ -112,3 +112,151 @@ The legal framework exists to protect both the client and the tester. A penteste
 - Vulnerability assessment finds weaknesses; penetration testing proves them and shows their consequences
 - Written authorisation and defined scope are non-negotiable — scope creep into unauthorised systems has legal consequences
 - Pentesting serves multiple purposes simultaneously — security improvement, compliance, risk quantification, and awareness
+
+---
+
+## 4. Types of Penetration Tests
+
+Penetration tests are categorised in two ways — by the amount of information the tester is given before starting, and by the perspective from which the test is conducted.
+
+### By Information Level
+
+**Black Box Testing**
+The tester is given no prior information about the target. No network diagrams, no credentials, no source code, no internal documentation. The tester starts from zero — exactly as an external attacker would.
+
+- Simulates a real external attacker with no insider knowledge
+- Most realistic simulation of an opportunistic attack
+- Time-consuming — significant time spent on reconnaissance
+- May miss vulnerabilities that would only be found with internal knowledge
+
+**White Box Testing**
+The tester is given full information — network diagrams, source code, credentials, architecture documentation, everything. Complete transparency.
+
+- Most thorough — tester can assess every component
+- Simulates a malicious insider or a scenario where the attacker has already obtained internal information
+- Most efficient use of testing time
+- Less realistic as an external attack simulation
+
+**Grey Box Testing**
+The tester is given partial information — typically some credentials, a network range, or basic architecture knowledge — but not full visibility.
+
+- Balance between realism and efficiency
+- Simulates a scenario where an attacker has obtained limited information (e.g. through a phishing attack or data breach)
+- Most commonly used in real-world engagements
+- Based on the amount and type of information provided
+
+### By Perspective
+
+**External Testing**
+Conducted from outside the organisation's network — simulating an internet-based attacker. Targets internet-facing assets: web applications, VPNs, email servers, DNS, public-facing APIs.
+
+**Internal Testing**
+Conducted from inside the organisation's network — simulating a malicious insider, a compromised employee, or an attacker who has already achieved initial access. Targets internal systems, Active Directory, internal web applications, network segments.
+
+**Summary:**
+
+| Type      | Information Given | Simulates                              |
+| --------- | ----------------- | -------------------------------------- |
+| Black Box | None              | External attacker from scratch         |
+| Grey Box  | Partial           | Attacker with limited prior knowledge  |
+| White Box | Full              | Insider or post-breach scenario        |
+| External  | —                 | Internet-based attacker                |
+| Internal  | —                 | Insider / post-initial-access attacker |
+
+---
+
+## 5. Rules of Engagement (RoE)
+
+The **Rules of Engagement** is the foundational document of any penetration testing engagement. It defines the legal, operational, and technical boundaries of the test before a single packet is sent.
+
+### Key RoE Components
+
+**Scope Definition**
+Explicitly lists what is in scope and what is out of scope:
+
+- In-scope IP ranges, domains, applications
+- Out-of-scope systems (e.g. third-party hosted services, production databases)
+- Whether social engineering is permitted
+- Whether physical testing is included
+
+**Testing Windows**
+The exact dates and times during which testing is authorised. Testing outside these windows is unauthorised — even against in-scope targets.
+
+**Communication Plan**
+
+- Primary and emergency contacts on the client side
+- Escalation procedure if a critical vulnerability is found during testing
+- What to do if the tester accidentally causes an outage
+- How findings are communicated during the engagement
+
+**Authorised Techniques**
+Explicitly lists what is permitted:
+
+- Scanning types (aggressive vs stealth)
+- Whether exploitation is permitted
+- Whether denial-of-service testing is included
+- Whether credential attacks are permitted
+
+**Emergency Stop Conditions**
+Conditions under which the tester must immediately halt all activity — e.g. discovery of evidence of an active breach by a third party, accidental system outage, client request to pause.
+
+---
+
+## 6. Scoping and Pre-Engagement
+
+Before testing begins, the pre-engagement phase establishes everything needed for a professional, controlled engagement.
+
+### Pre-Engagement Activities
+
+**Kickoff Meeting**
+Initial meeting between the pentesting team and the client to align on objectives, constraints, and expectations. Establishes the working relationship and clarifies any ambiguities before the Statement of Work is finalised.
+
+**Scope Definition**
+The most critical pre-engagement activity. Defines:
+
+- Target systems (IP ranges, domains, applications)
+- Testing type (black/grey/white box, external/internal)
+- Testing timeframe
+- Out-of-scope systems and restrictions
+
+**Questionnaire / Information Gathering**
+Client provides information relevant to the engagement:
+
+- Network diagrams (white/grey box)
+- Credentials for authenticated testing
+- Known vulnerabilities or recent changes to the environment
+- Critical systems that must not be disrupted
+
+**Statement of Work (SoW)**
+The formal legal contract covering:
+
+- Scope of work
+- Deliverables (report format, presentation)
+- Timeline and milestones
+- Payment terms
+- Liability limitations
+- Confidentiality obligations
+
+**Non-Disclosure Agreement (NDA)**
+Protects both parties — the client's sensitive information stays with the tester, and the tester's methodologies are protected from public disclosure.
+
+### Threat Modelling
+
+Before testing begins, effective pentesters model the threats relevant to the client:
+
+- **Who** would realistically attack this organisation? (Nation-state, cybercriminal, insider, hacktivist)
+- **What** are they after? (Financial data, intellectual property, service disruption)
+- **How** would they approach it? (External attack, phishing, supply chain)
+
+This shapes the testing approach — a bank faces different realistic threats than a healthcare provider or a manufacturing plant.
+
+---
+
+## Key Takeaways — Section 2
+
+- Black box = no information (most realistic), white box = full information (most thorough), grey box = partial (most common in practice)
+- External testing simulates internet-based attackers; internal testing simulates insiders or post-compromise scenarios
+- Rules of Engagement are the legal foundation of every engagement — scope, timing, techniques, and emergency contacts must all be defined before testing starts
+- Scope creep into out-of-scope systems — even accidentally — has legal consequences; always verify before touching anything new
+- The Statement of Work is the binding contract; the NDA protects both parties
+- Threat modelling before testing shapes the approach — who realistically attacks this client, and how?
