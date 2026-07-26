@@ -280,3 +280,248 @@ tracert <target IP>             # Windows
 - TTL values in ICMP replies hint at the OS — 64 is Linux, 128 is Windows
 - ICMP blocking is common — a non-responsive host is not necessarily down; always use multiple discovery methods
 - ICMP tunnelling is a real exfiltration and C2 technique — encrypted traffic in ICMP is harder to detect
+
+---
+
+## 6. FTP — File Transfer Protocol
+
+**FTP** is one of the oldest network protocols still in widespread use. It transfers files between a client and server over TCP using two separate channels:
+
+- **Port 21** — Control channel: commands and responses (USER, PASS, LIST, RETR, STOR)
+- **Port 20** — Data channel: actual file transfer
+
+### FTP Modes
+
+**Active Mode:**
+
+1. Client connects to server on port 21 (control)
+2. Client tells server which port it is listening on
+3. Server initiates data connection FROM port 20 TO client's specified port
+
+- Problem: firewalls on the client side often block incoming connections
+
+**Passive Mode:**
+
+1. Client connects to server on port 21 (control)
+2. Client sends PASV command
+3. Server opens a random high port and tells client which one
+4. Client initiates the data connection to that port
+
+- Solves the firewall problem — all connections initiated by client
+
+### FTP Security Issues
+
+FTP transmits everything in **cleartext** — username, password, and file contents are all readable by anyone on the network path.
+
+**Anonymous FTP** — many FTP servers allow login with username `anonymous` and any password (or blank). Anonymous access is a common misconfiguration that exposes files publicly.
+
+```bash
+ftp <target IP>
+# At prompt:
+Username: anonymous
+Password: (blank or any email)
+```
+
+**Key FTP commands:**
+
+```bash
+ls          # list directory
+cd          # change directory
+get <file>  # download file
+put <file>  # upload file
+binary      # switch to binary transfer mode
+bye         # exit
+```
+
+**Security relevance:**
+
+- FTP credentials sent in cleartext — capturable with Wireshark or tcpdump on the same network
+- Anonymous login → read/write access to files without credentials
+- Writable FTP directories → potential for uploading webshells if the FTP root overlaps with the web root
+- **FTPS** (FTP over SSL) and **SFTP** (SSH File Transfer Protocol) are the secure alternatives — SFTP is preferred as it runs over SSH on port 22
+
+---
+
+## 7. HTTP — HyperText Transfer Protocol
+
+HTTP is the foundation of data communication on the web. Every web page, API call, and web application interaction uses HTTP (or its encrypted version, HTTPS).
+
+### HTTP Request Structure
+
+```
+GET /index.html HTTP/1.1
+Host: www.example.com
+User-Agent: Mozilla/5.0
+Accept: text/html
+Connection: keep-alive
+```
+
+Components:
+
+- **Method** — what action to perform (GET, POST, PUT, DELETE, HEAD, OPTIONS, PATCH)
+- **Path** — the resource being requested (`/index.html`)
+- **HTTP Version** — `HTTP/1.1` or `HTTP/2`
+- **Headers** — metadata about the request
+- **Body** — data sent with POST/PUT requests
+
+### HTTP Methods
+
+| Method      | Purpose                      | Idempotent | Safe |
+| ----------- | ---------------------------- | ---------- | ---- |
+| **GET**     | Retrieve a resource          | Yes        | Yes  |
+| **POST**    | Submit data, create resource | No         | No   |
+| **PUT**     | Create or replace a resource | Yes        | No   |
+| **DELETE**  | Remove a resource            | Yes        | No   |
+| **HEAD**    | GET without response body    | Yes        | Yes  |
+| **OPTIONS** | List allowed methods         | Yes        | Yes  |
+| **PATCH**   | Partially update a resource  | No         | No   |
+
+### HTTP Response Structure
+
+```
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Length: 1234
+Server: Apache/2.4.41
+
+<html>...</html>
+```
+
+### HTTP Headers — Security Relevant
+
+**Request headers attackers look for:**
+
+- `Authorization` — credentials, JWT tokens
+- `Cookie` — session tokens
+- `X-Forwarded-For` — real IP behind a proxy; can be spoofed
+- `Referer` — reveals where a request came from
+
+**Response headers defenders should set:**
+| Header | Purpose |
+|--------|---------|
+| `Strict-Transport-Security` | Forces HTTPS |
+| `Content-Security-Policy` | Restricts resources the browser can load (XSS mitigation) |
+| `X-Frame-Options` | Prevents clickjacking |
+| `X-Content-Type-Options` | Prevents MIME sniffing |
+| `Referrer-Policy` | Controls Referer header leakage |
+| `Permissions-Policy` | Restricts browser features |
+
+### HTTPS
+
+**HTTPS** = HTTP + TLS (Transport Layer Security). TLS encrypts the HTTP traffic so it cannot be read in transit.
+
+TLS handshake establishes:
+
+1. Which TLS version and cipher suite to use
+2. Server identity verification via certificate
+3. Symmetric encryption key exchange
+
+**Security relevance of HTTP/HTTPS:**
+
+- HTTP sends everything in cleartext — session cookies, credentials, all content interceptable
+- Missing security headers are low-effort findings in web assessments
+- HTTP methods like PUT and DELETE enabled on a web server can allow unauthorized file upload or deletion
+- `OPTIONS` method revealing unexpected methods (PUT, DELETE, TRACE) indicates misconfiguration
+- `TRACE` method enabled → Cross-Site Tracing (XST) attack possible
+
+---
+
+## 8. SMB — Server Message Block
+
+**SMB** is a network communication protocol used primarily for providing shared access to files, printers, and serial ports between nodes on a network. It operates over TCP port 445 (and legacy NetBIOS ports 137–139).
+
+SMB is one of the most targeted protocols in internal network penetration testing — it is the backbone of Windows file sharing and has a long history of critical vulnerabilities.
+
+### SMB Versions
+
+| Version | OS                 | Notes                                                       |
+| ------- | ------------------ | ----------------------------------------------------------- |
+| SMBv1   | Windows XP/2003    | Legacy, insecure — **EternalBlue (MS17-010) exploits this** |
+| SMBv2   | Windows Vista/2008 | Improved performance and security                           |
+| SMBv3   | Windows 8/2012+    | Added encryption support                                    |
+
+### SMB Security Issues
+
+**EternalBlue (MS17-010)** — a critical vulnerability in SMBv1 that allowed unauthenticated remote code execution. Exploited by WannaCry ransomware in 2017, affecting hundreds of thousands of systems globally. The exploit is still publicly available in Metasploit (`exploit/windows/smb/ms17_010_eternalblue`).
+
+**Null sessions** — older SMB configurations allow unauthenticated connections that can enumerate users, shares, and system information.
+
+**Pass-the-Hash** — SMB authentication uses NTLM hashes. An attacker who captures an NTLM hash (via Responder, for example) can use it directly to authenticate without knowing the plaintext password.
+
+**SMB Relay** — instead of cracking captured NTLM hashes, relay them to another machine that trusts the victim — potentially gaining access without any cracking.
+
+**Common SMB enumeration:**
+
+```bash
+# List shares without credentials
+smbclient -L //<target IP> -N
+
+# Connect to a share
+smbclient //<target IP>/ShareName -N
+
+# Enumerate with enum4linux
+enum4linux -a <target IP>
+
+# Nmap SMB scripts
+nmap --script smb-enum-shares,smb-enum-users <target IP>
+```
+
+---
+
+## 9. SSH — Secure Shell
+
+**SSH** provides encrypted remote access to systems over an insecure network. It replaced Telnet (which sent everything in cleartext) as the standard for remote administration. Runs on TCP port 22.
+
+### SSH Authentication Methods
+
+| Method                   | Description            | Security                                        |
+| ------------------------ | ---------------------- | ----------------------------------------------- |
+| **Password**             | Username + password    | Vulnerable to brute force                       |
+| **Public Key**           | Cryptographic key pair | Strongest — private key never leaves the client |
+| **Keyboard-Interactive** | Challenge-response     | Used for MFA                                    |
+| **Certificate**          | SSH certificates       | Enterprise environments                         |
+
+### SSH Key Authentication
+
+```bash
+# Generate a key pair
+ssh-keygen -t ed25519 -C "your@email.com"
+
+# Copy public key to server
+ssh-copy-id user@<target IP>
+
+# Connect using key
+ssh -i ~/.ssh/id_ed25519 user@<target IP>
+```
+
+The **public key** goes on the server (`~/.ssh/authorized_keys`). The **private key** never leaves your machine.
+
+### SSH Security Relevance
+
+- **SSH brute forcing** — port 22 open to the internet is constantly scanned and brute-forced. Tools: `hydra`, `medusa`
+- **Default credentials** — many devices ship with SSH enabled and default credentials (root/root, admin/admin)
+- **Old SSH versions** — outdated OpenSSH versions have known CVEs
+- **SSH tunnelling / port forwarding** — SSH can forward ports, creating encrypted tunnels through firewalls:
+
+  ```bash
+  # Local port forward — access remote service locally
+  ssh -L 8080:localhost:80 user@<target IP>
+
+  # Dynamic SOCKS proxy — route all traffic through SSH
+  ssh -D 1080 user@<target IP>
+  ```
+
+  Attackers use SSH tunnelling to pivot through compromised hosts and reach otherwise unreachable internal services
+
+---
+
+## Key Takeaways — Section 3
+
+- FTP uses two channels (control port 21, data port 20) and transmits everything in cleartext — always check for anonymous login
+- SFTP over SSH port 22 is the secure replacement for FTP — never use plain FTP where SFTP is available
+- HTTP headers are a two-sided security surface — request headers leak information, response headers enforce browser security policies
+- HTTPS encrypts HTTP traffic with TLS — missing HSTS means users can be downgraded to HTTP
+- SMB port 445 is one of the highest-value targets in internal network pentesting — EternalBlue, Pass-the-Hash, and SMB relay are all critical attack vectors
+- SMBv1 should be disabled everywhere — if it is enabled, EternalBlue is the first thing to check
+- SSH replaced Telnet — password auth is vulnerable to brute force, key-based auth is the standard
+- SSH tunnelling enables port forwarding and SOCKS proxying — used by attackers for pivoting through internal networks
