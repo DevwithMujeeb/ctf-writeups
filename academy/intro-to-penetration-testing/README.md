@@ -100,8 +100,7 @@ Penetration testing is legal only because it is explicitly authorised. Without a
 - **USA:** Computer Fraud and Abuse Act (CFAA)
 - **Nigeria:** Cybercrimes (Prohibition, Prevention, Etc.) Act 2015
 - **EU:** Directive on Attacks Against Information Systems
-
-The legal framework exists to protect both the client and the tester. A pentester operating outside their authorised scope — even accidentally — can face criminal prosecution.
+  The legal framework exists to protect both the client and the tester. A pentester operating outside their authorised scope — even accidentally — can face criminal prosecution.
 
 ---
 
@@ -128,17 +127,15 @@ The tester is given no prior information about the target. No network diagrams, 
 - Most realistic simulation of an opportunistic attack
 - Time-consuming — significant time spent on reconnaissance
 - May miss vulnerabilities that would only be found with internal knowledge
-
-**White Box Testing**
-The tester is given full information — network diagrams, source code, credentials, architecture documentation, everything. Complete transparency.
+  **White Box Testing**
+  The tester is given full information — network diagrams, source code, credentials, architecture documentation, everything. Complete transparency.
 
 - Most thorough — tester can assess every component
 - Simulates a malicious insider or a scenario where the attacker has already obtained internal information
 - Most efficient use of testing time
 - Less realistic as an external attack simulation
-
-**Grey Box Testing**
-The tester is given partial information — typically some credentials, a network range, or basic architecture knowledge — but not full visibility.
+  **Grey Box Testing**
+  The tester is given partial information — typically some credentials, a network range, or basic architecture knowledge — but not full visibility.
 
 - Balance between realism and efficiency
 - Simulates a scenario where an attacker has obtained limited information (e.g. through a phishing attack or data breach)
@@ -178,9 +175,8 @@ Explicitly lists what is in scope and what is out of scope:
 - Out-of-scope systems (e.g. third-party hosted services, production databases)
 - Whether social engineering is permitted
 - Whether physical testing is included
-
-**Testing Windows**
-The exact dates and times during which testing is authorised. Testing outside these windows is unauthorised — even against in-scope targets.
+  **Testing Windows**
+  The exact dates and times during which testing is authorised. Testing outside these windows is unauthorised — even against in-scope targets.
 
 **Communication Plan**
 
@@ -188,17 +184,14 @@ The exact dates and times during which testing is authorised. Testing outside th
 - Escalation procedure if a critical vulnerability is found during testing
 - What to do if the tester accidentally causes an outage
 - How findings are communicated during the engagement
-
-**Authorised Techniques**
-Explicitly lists what is permitted:
-
+  **Authorised Techniques**
+  Explicitly lists what is permitted:
 - Scanning types (aggressive vs stealth)
 - Whether exploitation is permitted
 - Whether denial-of-service testing is included
 - Whether credential attacks are permitted
-
-**Emergency Stop Conditions**
-Conditions under which the tester must immediately halt all activity — e.g. discovery of evidence of an active breach by a third party, accidental system outage, client request to pause.
+  **Emergency Stop Conditions**
+  Conditions under which the tester must immediately halt all activity — e.g. discovery of evidence of an active breach by a third party, accidental system outage, client request to pause.
 
 ---
 
@@ -218,27 +211,22 @@ The most critical pre-engagement activity. Defines:
 - Testing type (black/grey/white box, external/internal)
 - Testing timeframe
 - Out-of-scope systems and restrictions
-
-**Questionnaire / Information Gathering**
-Client provides information relevant to the engagement:
-
+  **Questionnaire / Information Gathering**
+  Client provides information relevant to the engagement:
 - Network diagrams (white/grey box)
 - Credentials for authenticated testing
 - Known vulnerabilities or recent changes to the environment
 - Critical systems that must not be disrupted
-
-**Statement of Work (SoW)**
-The formal legal contract covering:
-
+  **Statement of Work (SoW)**
+  The formal legal contract covering:
 - Scope of work
 - Deliverables (report format, presentation)
 - Timeline and milestones
 - Payment terms
 - Liability limitations
 - Confidentiality obligations
-
-**Non-Disclosure Agreement (NDA)**
-Protects both parties — the client's sensitive information stays with the tester, and the tester's methodologies are protected from public disclosure.
+  **Non-Disclosure Agreement (NDA)**
+  Protects both parties — the client's sensitive information stays with the tester, and the tester's methodologies are protected from public disclosure.
 
 ### Threat Modelling
 
@@ -247,8 +235,7 @@ Before testing begins, effective pentesters model the threats relevant to the cl
 - **Who** would realistically attack this organisation? (Nation-state, cybercriminal, insider, hacktivist)
 - **What** are they after? (Financial data, intellectual property, service disruption)
 - **How** would they approach it? (External attack, phishing, supply chain)
-
-This shapes the testing approach — a bank faces different realistic threats than a healthcare provider or a manufacturing plant.
+  This shapes the testing approach — a bank faces different realistic threats than a healthcare provider or a manufacturing plant.
 
 ---
 
@@ -312,8 +299,7 @@ Gathering information without directly interacting with the target. Uses publicl
 - **Wayback Machine** — archived versions of websites revealing old endpoints, technologies, and content
 - **Certificate Transparency logs** — reveals subdomains via SSL certificate history (`crt.sh`)
 - **theHarvester** — automated OSINT tool for emails, subdomains, IPs from public sources
-
-**Key OSINT principle:** Every piece of public information is a potential attack vector. Job postings that list specific software versions, LinkedIn profiles that reveal internal team structure, and GitHub commits that expose API keys are all real findings from real engagements.
+  **Key OSINT principle:** Every piece of public information is a potential attack vector. Job postings that list specific software versions, LinkedIn profiles that reveal internal team structure, and GitHub commits that expose API keys are all real findings from real engagements.
 
 ### Active Reconnaissance
 
@@ -390,9 +376,7 @@ After scanning, for each discovered host we want to gather:
 - Service versions — what software and version is running
 - Information — OS, hostname, domain membership
 - Operational status — is the service actually functional
-
-**There are two port states of particular importance:**
-
+  **There are two port states of particular importance:**
 - **Open** — actively accepting connections — a service is running
 - **Filtered** — a firewall is blocking the probe — the port may or may not be open
 
@@ -508,9 +492,8 @@ Examples:
 - SQL injection manually extracted via `sqlmap` or raw payloads
 - Authentication bypass via logic flaws
 - File upload bypass — MIME type manipulation, double extension, null byte injection
-
-**Password Attacks**
-Gaining access through credential attacks:
+  **Password Attacks**
+  Gaining access through credential attacks:
 
 ```bash
 # Brute force SSH
@@ -677,3 +660,201 @@ Demonstrate what data an attacker could steal — without actually exfiltrating 
 - Privilege escalation moves from low to high privilege — sudo misconfiguration and SUID binaries are the most common Linux vectors
 - Lateral movement expands the compromise across the network — Pass-the-Hash and credential reuse are the most reliable techniques
 - Network pivoting reaches internal systems through a compromised host — SSH tunnelling and SOCKS proxies are the primary tools
+
+---
+
+## 12. Phase 5 — Reporting
+
+The report is the only tangible deliverable of a penetration test. The most technically brilliant engagement is worthless if the findings cannot be communicated clearly to the people who need to act on them.
+
+A penetration test report serves two audiences simultaneously:
+
+- **Technical audience** — developers, system administrators, security engineers who need exact reproduction steps and technical details
+- **Executive audience** — management and leadership who need business impact and prioritised remediation without technical jargon
+
+### Report Structure
+
+**1. Executive Summary**
+A non-technical overview written for leadership and decision-makers:
+
+- Overall security posture assessment
+- Critical findings summary
+- Business risk and impact in plain language
+- High-level remediation priorities
+- Testing scope and timeline overview
+  **2. Scope and Methodology**
+- What was tested (systems, networks, applications)
+- Testing type (black/grey/white box, external/internal)
+- Testing dates and windows
+- Tools and techniques used
+- Limitations of the assessment
+  **3. Findings**
+
+Each finding documented with:
+
+| Field                  | Description                                      |
+| ---------------------- | ------------------------------------------------ |
+| **Title**              | Clear, descriptive name of the vulnerability     |
+| **Severity**           | Critical / High / Medium / Low / Informational   |
+| **CVSS Score**         | Numerical severity score (0–10)                  |
+| **CVE Reference**      | If applicable                                    |
+| **Description**        | What the vulnerability is and why it matters     |
+| **Evidence**           | Screenshots, command output, proof-of-concept    |
+| **Steps to Reproduce** | Exact reproduction steps                         |
+| **Impact**             | What an attacker could do if they exploited this |
+| **Remediation**        | Specific, actionable fix guidance                |
+
+**4. Risk Rating**
+
+Vulnerabilities are rated by severity:
+
+| Rating            | CVSS Score | Description                                          |
+| ----------------- | ---------- | ---------------------------------------------------- |
+| **Critical**      | 9.0–10.0   | Immediate exploitation possible, maximum impact      |
+| **High**          | 7.0–8.9    | Significant impact, exploitable with moderate effort |
+| **Medium**        | 4.0–6.9    | Moderate impact or requires specific conditions      |
+| **Low**           | 0.1–3.9    | Minimal impact or very difficult to exploit          |
+| **Informational** | N/A        | No direct risk but worth noting                      |
+
+**5. Remediation Summary**
+A prioritised list of all findings with remediation status — used by the client to track fixes over time.
+
+**6. Appendices**
+
+- Raw tool output
+- Full command history
+- Network diagrams
+- Methodology references
+
+### Report Writing Principles
+
+- **Be specific** — "SQL injection on the login form at /admin/login.php via the username parameter" not "SQL injection found"
+- **Show evidence** — every critical and high finding needs a screenshot or proof-of-concept
+- **Separate technical and business language** — the executive summary should be readable by a non-technical CEO
+- **Prioritise** — not all vulnerabilities are equal; guide the client on what to fix first
+- **Include remediation** — findings without fixes are incomplete; always provide specific, actionable guidance
+- **Be professional** — the report represents both you and your client; accuracy, clarity, and professionalism matter
+
+---
+
+## 13. Penetration Testing Areas and Domains
+
+Based on environment and target type, pentesting is divided into specialised domains:
+
+### Network Infrastructure Testing
+
+Testing of network devices, servers, and communication channels. Focuses on:
+
+- Firewall and router configurations
+- Network segmentation and VLAN controls
+- Protocol vulnerabilities
+- Wireless network security
+
+### Web Application Testing
+
+Testing web-facing applications for vulnerabilities. Follows the OWASP Testing Guide. Focuses on:
+
+- Authentication and session management
+- Input validation (injection flaws, XSS)
+- Access control
+- API security
+- Business logic flaws
+
+### Active Directory / Internal Network Testing
+
+Testing Windows domain environments. Focuses on:
+
+- Active Directory misconfigurations
+- Kerberoasting, AS-REP Roasting
+- Pass-the-Hash, Pass-the-Ticket
+- BloodHound attack path analysis
+- Domain privilege escalation
+
+### Social Engineering Testing
+
+Testing the human layer. Includes:
+
+- Phishing campaigns
+- Vishing (voice phishing)
+- Physical intrusion testing
+- USB drop attacks
+
+### Cloud Infrastructure Testing
+
+Testing cloud environments (AWS, Azure, GCP). Focuses on:
+
+- IAM misconfigurations
+- Storage bucket exposure
+- Metadata service attacks (SSRF → cloud credentials)
+- Container and Kubernetes security
+
+### Mobile Application Testing
+
+Testing iOS and Android applications. Focuses on:
+
+- Insecure data storage
+- Insecure communication
+- Authentication weaknesses
+- Reverse engineering
+
+---
+
+## 14. Module Key Takeaways
+
+### The Penetration Testing Mindset
+
+A penetration tester thinks like an attacker but operates like a professional.
+
+The technical skills — scanning, exploiting, escalating, pivoting — are only half the job. The other half is:
+
+- Communicating findings clearly to non-technical stakeholders
+- Operating within legal and ethical boundaries at all times
+- Documenting everything — notes, screenshots, command history — as you go
+- Understanding the business context of what you are testing
+
+### The Full Attack Chain
+
+```
+Pre-Engagement        → Scope, RoE, SoW, NDA
+      │
+Reconnaissance        → OSINT, passive/active info gathering
+      │
+Scanning              → Nmap, service discovery, OS fingerprinting
+      │
+Enumeration           → SMB, HTTP, FTP, SNMP, SSH — pull detail from every service
+      │
+Vulnerability ID      → Map versions to CVEs, run vuln scripts
+      │
+Exploitation          → Metasploit, manual exploits, password attacks
+      │
+Foothold              → Reverse shell, Meterpreter, shell stabilisation
+      │
+Post-Exploitation     → Local enum, privesc, lateral movement, pivoting
+      │
+Reporting             → Executive summary, technical findings, remediation
+```
+
+Every HTB machine walkthrough follows this exact chain — from the first Nmap scan to the root flag.
+
+### Core Principles
+
+- **Authorisation first, always** — if it is not in the scope document, do not touch it
+- **Document as you go** — never rely on memory; take notes and screenshots in real time
+- **Enumerate thoroughly before exploiting** — rushing to exploitation without complete enumeration means missing easier paths
+- **Think like an attacker** — what would a real threat actor want from this system? That shapes where to focus
+- **Impact over access** — gaining root on a server no one uses is less critical than reading a database with customer PII. Always contextualise findings by business impact
+- **Leave no trace (unless agreed)** — remove test accounts, reverse configuration changes, and clean up tooling unless the client explicitly wants persistence demonstrated
+- **The report is the product** — technical skill gets you findings; writing skill gets them fixed
+
+### What Comes Next
+
+With the full penetration testing methodology understood, every subsequent activity in the CJCA path is an application of this framework:
+
+- **Network Enumeration With Nmap** — deep dive into the scanning phase
+- **HTB Machines** — end-to-end application of the full attack chain against real targets
+- **Specialised modules** — Active Directory, web application testing, privilege escalation — each is a deep dive into one phase or domain of the methodology
+  The methodology never changes. The targets do.
+
+---
+
+_Module completed July 2026 — HackTheBox Academy, Junior Cybersecurity Analyst path_
