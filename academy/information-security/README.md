@@ -669,3 +669,89 @@ Ensures the organisation adheres to relevant security regulations, standards, an
 - Penetration testers and bug bounty hunters do the same work with different employment models — both are legitimate career paths
 - Security Analysts and Incident Responders are the most in-demand entry-level roles in the industry — the SOC is where most practitioners start
 - Understanding all roles helps you navigate where you want to specialise and how each role interacts with the others
+
+---
+
+## 10. InfoSec Domains — Deep Dive Summary
+
+Before the final takeaways, a consolidated view of all InfoSec domains with their primary threats, controls, and responsible parties:
+
+| Domain                   | Primary Threats                           | Key Controls                               | Who's Responsible                         |
+| ------------------------ | ----------------------------------------- | ------------------------------------------ | ----------------------------------------- |
+| **Network Security**     | DDoS, MitM, intrusion                     | Firewalls, IDS/IPS, VPN, segmentation      | Network admins, security engineers        |
+| **Application Security** | Injection, XSS, broken auth               | Secure SDLC, code review, WAF, pentesting  | Developers, security architects           |
+| **Operational Security** | Data leakage, process failures            | Access control, monitoring, classification | All staff, security teams                 |
+| **DR & BC**              | Ransomware, disasters, outages            | Backups, failover, tested DR plans         | IT leadership, management                 |
+| **Cloud Security**       | Misconfiguration, insecure APIs           | IAM, encryption, shared responsibility     | Cloud admins, CSPs, security teams        |
+| **Physical Security**    | Theft, tailgating, hardware tampering     | Locks, CCTV, badges, secure disposal       | Facilities, IT security, all employees    |
+| **Mobile Security**      | Device theft, malicious apps, rogue Wi-Fi | MDM, encryption, app vetting, VPN          | IT, CISOs, security teams                 |
+| **IoT Security**         | Default credentials, firmware vulns       | Secure design, network isolation, patching | Manufacturers, network admins, developers |
+
+---
+
+## 11. Module Key Takeaways
+
+### The Foundation Everything Builds On
+
+This module is the conceptual bedrock of the entire CJCA path. Every subsequent module — networking, web applications, penetration testing, Nmap — operates within the framework established here.
+
+Understanding information security means understanding:
+
+- **What** is being protected (data, systems, people)
+- **Why** it matters (business continuity, compliance, trust)
+- **Who** is responsible (roles and teams)
+- **What** threatens it (threat landscape)
+- **How** it is protected (tools, processes, controls)
+- **How** it is tested (red team, penetration testing, bug bounty)
+
+### The Security Mindset
+
+A developer builds features. A security engineer interrogates them.
+
+A user clicks links. A security-aware user questions them.
+
+An organisation deploys systems. A security team assesses them.
+
+The shift from building to breaking — and back to building more securely — is what this entire path is training. Every module adds another dimension to that shift.
+
+### How Everything Connects
+
+```
+Information Security (this module)
+    │
+    ├── Network Foundations → how networks carry data
+    │       └── Introduction To Networking → protocols, services, attacks
+    │               └── Network Enumeration With Nmap → active recon
+    │
+    ├── Introduction To Web Applications → web attack surface
+    │       └── Web Requests → HTTP at the protocol level
+    │
+    └── Introduction To Penetration Testing → methodology and process
+            └── Machines → applying everything in practice
+```
+
+Every layer of knowledge feeds the next. You cannot enumerate effectively without understanding protocols. You cannot exploit without understanding the application. You cannot report without understanding risk.
+
+### Core Principles to Carry Forward
+
+- **Security is everyone's responsibility** — not just the security team. Developers write vulnerable code. Users click phishing links. Admins misconfigure systems. Security requires buy-in at every level
+- **The CIA Triad is the universal measuring stick** — every vulnerability breaks confidentiality, integrity, or availability. Every control protects one or more
+- **Risk is the language of security** — not fear, not compliance checkboxes. Risk = Threat × Vulnerability. Prioritise by impact and likelihood
+- **Attackers only need to be right once** — defenders need to be right every time. This asymmetry is why continuous monitoring, defence in depth, and incident response planning are non-negotiable
+- **Tools are only as good as the person using them** — Metasploit, Burp Suite, and Nmap are just tools. Understanding what they do at the protocol level is what makes you dangerous with them
+- **The human layer is always the weakest** — social engineering, phishing, and insider threats bypass every technical control. Security awareness is a technical control
+- **Security is a process, not a state** — there is no finish line. Threats evolve, systems change, and new vulnerabilities are discovered constantly. Continuous improvement is the only sustainable approach
+
+### What This Module Enables
+
+With the foundations of Information Security in place:
+
+- **Threat modelling** — you can now systematically identify what threatens a system and prioritise defences
+- **Vulnerability assessment** — you understand the difference between a threat, a vulnerability, and a risk — and can communicate findings in business language
+- **Penetration testing** — you know the legal, ethical, and methodological framework within which offensive security operates
+- **Career navigation** — you understand the full landscape of roles and can make informed decisions about where to specialise
+- **Every subsequent module** — all technical content in the CJCA path now has a conceptual home to live in
+
+---
+
+_Module completed July 2026 — HackTheBox Academy, Junior Cybersecurity Analyst path_
