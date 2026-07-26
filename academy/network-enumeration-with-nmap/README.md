@@ -25,7 +25,9 @@ Nmap (Network Mapper) is the industry-standard tool for network discovery and se
 - What services and versions are running on those ports
 - What operating system the host is running
 - What vulnerabilities may be present based on service versions
-  Nmap is used at multiple phases of a penetration test:
+
+Nmap is used at multiple phases of a penetration test:
+
 - **Reconnaissance** — host discovery, network mapping
 - **Scanning** — port scanning, service detection
 - **Enumeration** — pulling detailed information from services via NSE scripts
@@ -89,7 +91,8 @@ By default when scanning a network, Nmap sends:
 - **TCP SYN to port 443** — checks if HTTPS port responds
 - **TCP ACK to port 80** — checks if HTTP port responds
 - **ICMP Timestamp Request** — alternative host detection
-  When scanning a single host, Nmap skips the ping sweep and goes straight to port scanning.
+
+When scanning a single host, Nmap skips the ping sweep and goes straight to port scanning.
 
 ### Disabling Host Discovery
 
@@ -137,7 +140,8 @@ sudo nmap 10.129.2.28 -sS
 - Never completes the three-way handshake — connection not fully established
 - Stealthy — many older logging systems only log completed connections
 - Requires root/sudo
-  **TCP Connect Scan (`-sT`)**
+
+**TCP Connect Scan (`-sT`)**
 
 ```bash
 nmap 10.129.2.28 -sT
@@ -146,7 +150,8 @@ nmap 10.129.2.28 -sT
 - Completes the full three-way handshake
 - Slower and more detectable than SYN scan
 - Does not require root privileges — useful when running without elevated access
-  **UDP Scan (`-sU`)**
+
+**UDP Scan (`-sU`)**
 
 ```bash
 sudo nmap 10.129.2.28 -sU
@@ -156,7 +161,8 @@ sudo nmap 10.129.2.28 -sU
 - Slower than TCP scanning — UDP has no handshake mechanism
 - Closed UDP ports return ICMP "port unreachable"; open ports often return nothing
 - Essential for finding DNS (53), SNMP (161), NTP (123)
-  **Scan specific ports:**
+
+**Scan specific ports:**
 
 ```bash
 sudo nmap 10.129.2.28 -p 22,80,443,445,3389
@@ -302,7 +308,9 @@ OS detection reveals:
 - OS version estimate
 - Kernel version (Linux)
 - Device type (router, switch, printer, general purpose)
-  **TTL hints from ping responses:**
+
+**TTL hints from ping responses:**
+
 - Linux/Unix: TTL ≈ 64
 - Windows: TTL ≈ 128
 - Cisco: TTL ≈ 255
@@ -321,7 +329,8 @@ sudo nmap 10.129.2.28 -A
 - `-O` — OS detection
 - `-sC` — default NSE scripts
 - `--traceroute` — network path to target
-  **Use `-A` when you want maximum information and stealth is not a concern.** In CTF environments and lab testing, `-A` is the standard comprehensive scan. In professional engagements, run components separately for more control.
+
+**Use `-A` when you want maximum information and stealth is not a concern.** In CTF environments and lab testing, `-A` is the standard comprehensive scan. In professional engagements, run components separately for more control.
 
 ### Traceroute
 
@@ -342,3 +351,261 @@ Maps the network path to the target — reveals routers and network hops between
 - `--min-rate 5000` dramatically speeds up full port scans in lab environments
 - OS detection (`-O`) uses TCP/IP stack fingerprinting — TTL values give quick OS hints before running a full detection
 - `-A` combines version detection, OS detection, default scripts, and traceroute — maximum information, maximum noise
+
+---
+
+## 8. Service Enumeration and Version Detection
+
+After identifying open ports, the next step is determining exactly what application is running on each port and what version it is. This is the bridge between scanning and vulnerability identification — a port number alone tells you little; the service version tells you everything.
+
+### Service Version Detection (`-sV`)
+
+```bash
+sudo nmap 10.129.2.28 -p- -sV
+```
+
+Nmap probes each open port with protocol-specific requests and analyses responses to identify:
+
+- The application name (Apache, OpenSSH, vsftpd)
+- The version number (Apache 2.4.49, OpenSSH 7.4)
+- Additional details (OS, hostname, protocol variant)
+
+**Controlling version detection intensity:**
+
+```bash
+# Default intensity (3)
+sudo nmap 10.129.2.28 -p- -sV
+
+# Maximum intensity — more probes, more accurate, slower
+sudo nmap 10.129.2.28 -p- -sV --version-intensity 9
+
+# Light intensity — faster, less accurate
+sudo nmap 10.129.2.28 -p- -sV --version-intensity 0
+```
+
+**Stats during scan — track progress:**
+
+```bash
+sudo nmap 10.129.2.28 -p- -sV --stats-every=5s
+```
+
+**Verbose output — see results as they come in:**
+
+```bash
+sudo nmap 10.129.2.28 -p- -sV -v
+```
+
+**Everything verbose:**
+
+```bash
+sudo nmap 10.129.2.28 -p- -sV -v --stats-every=5s
+```
+
+### Why Version Detection Matters
+
+Once you have a service version, you can:
+
+1. Search for known CVEs: `searchsploit apache 2.4.49`
+2. Search Metasploit: `msf6 > search apache 2.4.49`
+3. Check NVD (nvd.nist.gov) for CVSS-scored vulnerabilities
+4. Look for public PoC exploits on GitHub or Exploit-DB
+
+A service version is a direct path to exploitation when a CVE exists.
+
+---
+
+## 9. Banner Grabbing
+
+**Banner grabbing** is the process of connecting to a service and reading the information it presents on connection — the "banner." Many services announce their name, version, and sometimes OS information in their banner.
+
+### Banner Grabbing with Nmap
+
+```bash
+sudo nmap 10.129.2.28 -p- -sV --script=banner
+```
+
+### Banner Grabbing with Netcat
+
+```bash
+nc -nv 10.129.2.28 80
+# Then type:
+HEAD / HTTP/1.0
+# Press Enter twice
+```
+
+### Banner Grabbing with curl
+
+```bash
+curl -I http://10.129.2.28
+```
+
+### What Banners Reveal
+
+| Service | Example Banner                       | Information                         |
+| ------- | ------------------------------------ | ----------------------------------- |
+| SSH     | `SSH-2.0-OpenSSH_7.4`                | Protocol version, software, version |
+| HTTP    | `Server: Apache/2.4.49 (Unix)`       | Web server, version, OS             |
+| FTP     | `220 vsftpd 3.0.3`                   | FTP daemon, version                 |
+| SMTP    | `220 mail.example.com ESMTP Postfix` | Mail server, hostname               |
+
+**Security relevance:** Banners that expose version information should be suppressed in production — this is a finding in itself during a pentest. `ServerTokens Prod` in Apache hides the version; SSH can be configured to return a generic banner.
+
+### tcpdump — Packet Capture During Scanning
+
+While Nmap scans, capturing traffic with tcpdump reveals exactly what packets are being exchanged:
+
+```bash
+# Terminal 1 — capture traffic
+sudo tcpdump -i eth0 host 10.129.2.28 -w scan_capture.pcap
+
+# Terminal 2 — run Nmap scan
+sudo nmap 10.129.2.28 -p 80 -sV
+
+# Analyse capture
+wireshark scan_capture.pcap
+```
+
+This technique is used to:
+
+- Understand exactly what Nmap sends and receives
+- Verify scan results
+- Debug unexpected results (filtered ports, no responses)
+- Capture service banners at the raw packet level
+
+---
+
+## 10. Nmap Scripting Engine (NSE)
+
+The **Nmap Scripting Engine (NSE)** is one of Nmap's most powerful features. It provides the ability to create scripts in Lua for interaction with certain services — automating a wide variety of networking tasks from service enumeration to vulnerability detection.
+
+There are a total of **14 categories** into which NSE scripts can be divided.
+
+### NSE Script Categories
+
+| Category      | Description                                                                                            |
+| ------------- | ------------------------------------------------------------------------------------------------------ |
+| **auth**      | Determines authentication credentials — attempts default or common credentials                         |
+| **broadcast** | Host discovery via broadcast messages — discovers hosts not in the target range                        |
+| **brute**     | Executes brute-force scripts to guess credentials for services                                         |
+| **default**   | Default scripts run with `-sC` — a curated selection of safe, informative scripts                      |
+| **discovery** | Evaluation and enumeration of services — retrieves accessible information                              |
+| **dos**       | Scripts that test for denial-of-service vulnerabilities — use with caution                             |
+| **exploit**   | Scripts that exploit known vulnerabilities in scanned services                                         |
+| **external**  | Scripts that use external services and databases for additional information                            |
+| **fuzzer**    | Scripts that send unexpected or random data to identify vulnerabilities                                |
+| **intrusive** | Scripts that affect the target system negatively — may crash services or consume significant resources |
+| **malware**   | Checks for infection of the target by malware or backdoors                                             |
+| **safe**      | Defensive scripts — will not adversely affect the target                                               |
+| **version**   | Extension for service version detection — used alongside `-sV`                                         |
+| **vuln**      | Identifies specific known vulnerabilities in discovered services                                       |
+
+### Running NSE Scripts
+
+**Default scripts (`-sC`)**
+
+```bash
+sudo nmap 10.129.2.28 -sC
+```
+
+Runs all scripts in the `default` category — safe, informative, and commonly used.
+
+**Specific script:**
+
+```bash
+sudo nmap 10.129.2.28 --script=banner
+sudo nmap 10.129.2.28 --script=http-title
+sudo nmap 10.129.2.28 --script=smb-vuln-ms17-010
+```
+
+**Multiple scripts:**
+
+```bash
+sudo nmap 10.129.2.28 --script=smb-enum-shares,smb-enum-users,smb-os-discovery
+```
+
+**Script category:**
+
+```bash
+sudo nmap 10.129.2.28 --script=vuln
+sudo nmap 10.129.2.28 --script=discovery
+sudo nmap 10.129.2.28 --script=safe
+```
+
+**Script with arguments:**
+
+```bash
+sudo nmap 10.129.2.28 --script=http-brute --script-args userdb=users.txt,passdb=passwords.txt
+```
+
+### Essential NSE Scripts by Service
+
+**HTTP/HTTPS (80, 443, 8080)**
+
+```bash
+nmap --script=http-title,http-headers,http-methods,http-robots.txt 10.129.2.28
+nmap --script=http-enum 10.129.2.28           # Directory enumeration
+nmap --script=http-shellshock 10.129.2.28     # Shellshock test
+```
+
+**SMB (445)**
+
+```bash
+nmap --script=smb-vuln-ms17-010 10.129.2.28   # EternalBlue
+nmap --script=smb-enum-shares,smb-enum-users 10.129.2.28
+nmap --script=smb-os-discovery 10.129.2.28
+```
+
+**FTP (21)**
+
+```bash
+nmap --script=ftp-anon,ftp-bounce,ftp-syst 10.129.2.28
+```
+
+**SSH (22)**
+
+```bash
+nmap --script=ssh-auth-methods,ssh-hostkey 10.129.2.28
+```
+
+**DNS (53)**
+
+```bash
+nmap --script=dns-zone-transfer,dns-brute 10.129.2.28
+```
+
+**SNMP (161 UDP)**
+
+```bash
+nmap -sU --script=snmp-info,snmp-interfaces,snmp-processes 10.129.2.28
+```
+
+**SMTP (25)**
+
+```bash
+nmap --script=smtp-commands,smtp-enum-users 10.129.2.28
+```
+
+### Finding and Searching Scripts
+
+```bash
+# List all scripts in a category
+ls /usr/share/nmap/scripts/ | grep smb
+
+# Search script database
+nmap --script-help smb-vuln-ms17-010
+
+# Update script database after adding new scripts
+sudo nmap --script-updatedb
+```
+
+---
+
+## Key Takeaways — Section 3
+
+- Service version detection (`-sV`) is the bridge between open ports and exploitable vulnerabilities — a port number is meaningless without the version
+- `--version-intensity` controls the depth of version probing — intensity 9 for maximum accuracy, 0 for speed
+- Banner grabbing reveals software and version from the service's own output — often more reliable than Nmap's fingerprinting
+- Version information in service banners is a finding in itself — production systems should suppress detailed version disclosure
+- NSE has 14 script categories — `default` and `safe` are non-intrusive; `exploit`, `dos`, and `intrusive` can cause damage
+- Always use `-sC` (default scripts) as part of standard enumeration — it adds significant value with minimal noise
+- SMB scripts (especially `smb-vuln-ms17-010`) and HTTP scripts are the highest-yield NSE scripts in most engagements
