@@ -525,3 +525,144 @@ The **public key** goes on the server (`~/.ssh/authorized_keys`). The **private 
 - SMBv1 should be disabled everywhere — if it is enabled, EternalBlue is the first thing to check
 - SSH replaced Telnet — password auth is vulnerable to brute force, key-based auth is the standard
 - SSH tunnelling enables port forwarding and SOCKS proxying — used by attackers for pivoting through internal networks
+
+---
+
+## 10. Network Security Protocols
+
+### IPsec — Internet Protocol Security
+
+**IPsec** is a suite of protocols that encrypts and authenticates IP packets at the network layer (Layer 3). Unlike TLS which operates at the application layer, IPsec secures all traffic regardless of the application — making it transparent to applications running on top.
+
+**Two core IPsec protocols:**
+
+| Protocol                                 | Purpose                                                                                              |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **AH (Authentication Header)**           | Provides integrity and authentication — ensures packets haven't been tampered with. Does NOT encrypt |
+| **ESP (Encapsulating Security Payload)** | Provides encryption, integrity, and authentication — the one you actually want                       |
+
+**Two IPsec modes:**
+
+| Mode               | Description                                                         | Use Case                   |
+| ------------------ | ------------------------------------------------------------------- | -------------------------- |
+| **Transport Mode** | Encrypts only the payload — original IP header is preserved         | Host-to-host communication |
+| **Tunnel Mode**    | Encrypts the entire original packet and wraps it in a new IP header | VPNs — gateway-to-gateway  |
+
+**IKE (Internet Key Exchange)** — the protocol used to set up IPsec security associations (SAs). Negotiates encryption algorithms and exchanges keys. IKEv2 is the current standard.
+
+**Security relevance:** IPsec is the foundation of most enterprise VPNs. Weak IKE configurations (aggressive mode, weak pre-shared keys) are exploitable. Tools like `ike-scan` enumerate IKE services and identify weak configurations.
+
+### VPN — Virtual Private Network
+
+A **VPN** creates an encrypted tunnel over a public network, allowing remote users or sites to communicate as if they were on the same private network.
+
+**VPN types:**
+
+| Type                  | Description                                                |
+| --------------------- | ---------------------------------------------------------- |
+| **Remote Access VPN** | Individual user connects to corporate network remotely     |
+| **Site-to-Site VPN**  | Connects two entire networks (e.g. two office branches)    |
+| **SSL/TLS VPN**       | Uses HTTPS for the tunnel — works through most firewalls   |
+| **IPsec VPN**         | Uses IPsec tunnel mode — common in enterprise environments |
+
+**Security relevance:** VPN concentrators are internet-facing and frequently targeted. Vulnerabilities in popular VPN products (Pulse Secure, Fortinet, Citrix) have been actively exploited by ransomware groups to gain initial access. VPN credentials obtained via phishing or credential stuffing provide direct network access.
+
+### PGP — Pretty Good Privacy
+
+**PGP** is an encryption program that provides cryptographic privacy and authentication for data communication. Most commonly used for encrypting emails and files.
+
+PGP uses **asymmetric encryption** (public/private key pair) for key exchange and **symmetric encryption** for the actual data — combining the security of asymmetric keys with the speed of symmetric encryption.
+
+**PGP trust model — Web of Trust:** Users sign each other's public keys to vouch for their identity. Different from the Certificate Authority (CA) model used in TLS.
+
+**Security relevance:** PGP-encrypted communications are commonly found during CTF challenges and in real forensic investigations. Understanding PGP key management matters for both protecting communications and for challenges involving encrypted data.
+
+---
+
+## 11. VLANs and Network Segmentation
+
+### VLANs — Virtual Local Area Networks
+
+A **VLAN** logically segments a physical network into separate broadcast domains without requiring separate physical infrastructure. Devices on different VLANs cannot communicate directly — even if they are connected to the same physical switch.
+
+**Why VLANs matter for security:**
+
+- Isolate sensitive systems (finance, HR, servers) from general user traffic
+- Contain broadcast storms to individual segments
+- Limit lateral movement — an attacker who compromises a device on the guest VLAN cannot directly reach the server VLAN
+
+**VLAN tagging (802.1Q)** — when traffic crosses between switches, frames are tagged with a VLAN ID so the receiving switch knows which VLAN it belongs to. Trunk ports carry traffic for multiple VLANs simultaneously.
+
+### VLAN Hopping
+
+**VLAN hopping** is an attack that allows traffic to jump from one VLAN to another without going through a router:
+
+**Switch Spoofing** — attacker configures their NIC to negotiate a trunk link with the switch, gaining access to all VLANs on that trunk.
+
+**Double Tagging** — attacker sends frames with two 802.1Q tags. The outer tag matches the attacker's native VLAN and gets stripped by the first switch. The inner tag routes the frame to the target VLAN on the next switch. Only works one-way (attacker → victim).
+
+**Defence:** Disable auto-trunking (DTP) on access ports, explicitly assign native VLANs, never use VLAN 1 as the native VLAN.
+
+### VTP — VLAN Trunking Protocol
+
+**VTP** is a Cisco proprietary protocol that propagates VLAN configuration changes across all switches in a VTP domain. A single configuration change on the VTP server is automatically pushed to all client switches.
+
+**Security risk:** If an attacker introduces a rogue switch into the network with a higher VTP revision number, all switches in the domain will adopt its VLAN database — potentially wiping all VLAN configurations and collapsing network segmentation entirely.
+
+---
+
+## 12. Routing Protocols
+
+Routers need to know where to send packets. **Routing protocols** are the mechanisms by which routers share information about network paths and make forwarding decisions.
+
+### Types of Routing
+
+| Type                | Description                                                                    |
+| ------------------- | ------------------------------------------------------------------------------ |
+| **Static Routing**  | Administrator manually configures routes. Simple but does not adapt to changes |
+| **Dynamic Routing** | Routers automatically share route information and adapt to topology changes    |
+| **Default Route**   | The route of last resort — used when no specific route matches (`0.0.0.0/0`)   |
+
+### Dynamic Routing Protocols
+
+**Distance-Vector Protocols** — routers share their entire routing table with neighbours. Simple but slow to converge and limited in scale.
+
+| Protocol  | Notes                                                    |
+| --------- | -------------------------------------------------------- |
+| **RIP**   | Maximum 15 hops. Converges slowly. Largely obsolete      |
+| **IGRP**  | Cisco proprietary. Legacy — replaced by EIGRP            |
+| **EIGRP** | Advanced Cisco protocol. Fast convergence, supports VLSM |
+
+**Link-State Protocols** — routers share information about their direct links with all routers in the network. Each router builds a complete map of the topology and calculates the best path independently.
+
+| Protocol  | Notes                                                                                    |
+| --------- | ---------------------------------------------------------------------------------------- |
+| **OSPF**  | Open standard. Used in enterprise networks. Organises routers into areas for scalability |
+| **IS-IS** | Used by ISPs and large service provider networks                                         |
+
+**Path-Vector Protocols** — used between autonomous systems (different organisations/ISPs):
+
+| Protocol | Notes                                                                                                 |
+| -------- | ----------------------------------------------------------------------------------------------------- |
+| **BGP**  | Border Gateway Protocol. Routes traffic across the entire internet. Called the "glue of the internet" |
+
+### Routing Security Relevance
+
+- **BGP hijacking** — a malicious or misconfigured AS announces routes it does not own, redirecting internet traffic through attacker-controlled infrastructure. Real-world incidents have redirected traffic from major cloud providers
+- **OSPF route injection** — an attacker on the network can inject false OSPF advertisements, manipulating routing decisions across the network
+- **RIP spoofing** — sending fake RIP updates to poison routing tables — trivial on networks still running RIP
+- **CDP (Cisco Discovery Protocol)** — running on Cisco devices by default, CDP broadcasts device information (hostname, IP, model, IOS version) to all directly connected devices. Attackers on the segment receive this information without authentication. Disable CDP on all ports not connecting to other Cisco infrastructure
+
+---
+
+## Key Takeaways — Section 4
+
+- IPsec operates at Layer 3 and encrypts all traffic regardless of application — ESP encrypts, AH only authenticates
+- Tunnel mode IPsec is used for VPNs — the entire original packet is encrypted and wrapped in a new IP header
+- VPN concentrators are internet-facing and high-value targets — known CVEs in VPN products have been used for ransomware initial access
+- VLANs provide logical segmentation without physical separation — they are a primary lateral movement control
+- VLAN hopping (switch spoofing and double tagging) bypasses VLAN segmentation — disable DTP and never use VLAN 1 as native
+- VTP rogue switch attacks can collapse an entire network's VLAN structure — a single device with a higher revision number wins
+- OSPF is the dominant enterprise routing protocol — false route injection is a real internal network attack
+- BGP is the routing protocol of the internet — BGP hijacking redirects internet-scale traffic
+- CDP leaks device information to anyone on the segment — disable it on access ports
