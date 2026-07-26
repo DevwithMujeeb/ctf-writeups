@@ -356,3 +356,154 @@ Unlike opportunistic attacks, APTs are:
 - Insider threats are the hardest to detect — they already have authorised access and know where the data is
 - APTs are long-term, targeted, and stealthy — their goal is persistence and intelligence, not immediate destruction
 - The human layer is consistently the weakest link — no technical control fully compensates for an untrained user
+
+---
+
+## 5. Tools in Information Security
+
+Security tools are the practical implementation of security controls. Every tool in this list maps to a specific security function — and most of them appear in penetration testing workflows as well as defensive operations.
+
+### Defensive Tools
+
+**Firewalls**
+Control incoming and outgoing network traffic based on predefined security rules. The gatekeeper between trusted and untrusted networks.
+
+Types: Packet filtering, stateful inspection, application layer (proxy), Next-Generation Firewall (NGFW).
+
+**Intrusion Detection / Prevention Systems (IDS/IPS)**
+Monitor network traffic and system activity for suspicious behaviour:
+
+- **IDS** — detects and alerts. Does not block
+- **IPS** — detects and actively blocks in real time
+
+**Security Information and Event Management (SIEM)**
+Collects and analyses security event data from across the organisation — logs from firewalls, servers, endpoints, and applications — correlating them to detect patterns that indicate attacks.
+
+Examples: Splunk, IBM QRadar, Microsoft Sentinel, Elastic SIEM.
+
+**Vulnerability Scanners**
+Identify potential weaknesses in systems and applications before attackers do. Automated tools that probe for known vulnerabilities, misconfigurations, and outdated software.
+
+Examples: Nessus, OpenVAS, Qualys.
+
+**Encryption Tools**
+Protect data confidentiality and integrity. Encrypt data at rest and in transit so even if intercepted or stolen, it is unreadable without the key.
+
+Examples: GPG/PGP, BitLocker, VeraCrypt, OpenSSL.
+
+**Access Control Systems**
+Manage user permissions and authentication. Enforce who can access what, under what conditions.
+
+Examples: Active Directory, LDAP, PAM (Privileged Access Management), IAM platforms.
+
+**Security Awareness Training Platforms**
+Educate users about security best practices — phishing recognition, password hygiene, social engineering awareness. The human firewall.
+
+Examples: KnowBe4, Proofpoint Security Awareness, Cofense.
+
+---
+
+### Offensive / Penetration Testing Tools
+
+Penetration testing tools run on Linux, Windows, and macOS — but Linux (particularly Kali Linux and Parrot OS) is the dominant platform for offensive security work.
+
+| Tool                | Category           | Purpose                                                                                           |
+| ------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| **Nmap**            | Reconnaissance     | Network scanning and service discovery — identifies open ports, running services, OS fingerprints |
+| **Wireshark**       | Analysis           | Network protocol analysis — captures and inspects packets in real time                            |
+| **Metasploit**      | Exploitation       | Exploitation framework — contains modules for known vulnerabilities across hundreds of services   |
+| **Burp Suite**      | Web Application    | Web app security testing — intercepts and manipulates HTTP/S traffic, scans for vulnerabilities   |
+| **John the Ripper** | Password Cracking  | Cracks password hashes using dictionary attacks, brute force, and rule-based attacks              |
+| **Hydra**           | Password Cracking  | Online brute-force tool — attacks login forms, SSH, FTP, SMB, RDP                                 |
+| **Aircrack-ng**     | Wireless           | Wi-Fi security testing — captures handshakes, cracks WPA/WPA2                                     |
+| **Hashcat**         | Password Cracking  | GPU-accelerated hash cracking — fastest available for offline attacks                             |
+| **Gobuster / ffuf** | Web Reconnaissance | Directory and file brute-forcing — discovers hidden paths and endpoints                           |
+| **Responder**       | Network            | Captures NTLMv2 hashes on the local network by poisoning LLMNR/NBT-NS                             |
+| **BloodHound**      | Active Directory   | Maps AD attack paths — visualises privilege escalation routes                                     |
+
+---
+
+## 6. Processes in Information Security
+
+Security is not a state — it is a continuous process. The InfoSec lifecycle involves seven recurring phases:
+
+### 1. Risk Assessment
+
+Identify and evaluate risks to the organisation. Determine which assets are most critical, what threats they face, what vulnerabilities exist, and what the potential impact of exploitation would be. Output: a prioritised risk register.
+
+### 2. Security Planning
+
+Develop the security strategy, policies, and roadmap based on the risk assessment. Define what controls are needed, what standards to comply with, and how to allocate resources.
+
+### 3. Implementation of Security Controls
+
+Deploy the technical and administrative controls identified in the security plan — firewalls, access controls, encryption, monitoring systems, security awareness training.
+
+### 4. Monitoring and Detection
+
+Continuously monitor systems, networks, and logs for anomalous activity. SIEM systems correlate events. IDS/IPS alerts on known attack signatures. Threat hunters look for activity that evades automated detection.
+
+### 5. Incident Response
+
+When a security incident occurs — respond systematically:
+
+**Incident Response phases:**
+
+1. **Preparation** — IR plan, team, tools in place before an incident
+2. **Identification** — detect and confirm the incident
+3. **Containment** — limit the spread and impact
+4. **Eradication** — remove the threat from the environment
+5. **Recovery** — restore systems to normal operation
+6. **Lessons Learned** — document what happened and improve defences
+
+### 6. Disaster Recovery
+
+Restore IT systems and data after a significant disruption. Closely related to incident response but focused on getting business operations back online — not just removing the threat.
+
+Key metrics:
+
+- **RTO (Recovery Time Objective)** — maximum acceptable downtime
+- **RPO (Recovery Point Objective)** — maximum acceptable data loss measured in time
+
+### 7. Continuous Improvement
+
+Security is never finished. New threats emerge, new vulnerabilities are discovered, systems change. The process loops — reassess risks, update controls, improve detection, refine response.
+
+---
+
+## 7. Authentication
+
+**Authentication** verifies the identity of a user, process, or device attempting to access a system. It is the gatekeeper — the first line of defence after network controls.
+
+### Authentication Factors
+
+Authentication is based on one or more of three factors:
+
+| Factor                 | Description      | Examples                                      |
+| ---------------------- | ---------------- | --------------------------------------------- |
+| **Something you know** | Knowledge-based  | Password, PIN, security questions             |
+| **Something you have** | Possession-based | Hardware token, smartphone (TOTP), smart card |
+| **Something you are**  | Inherence-based  | Fingerprint, facial recognition, retina scan  |
+
+**Multi-Factor Authentication (MFA)** — requires two or more factors. Significantly harder to bypass than single-factor authentication. Even if a password is stolen, the attacker still needs the second factor.
+
+### Authentication Methods
+
+- **Passwords** — most common, most abused. Weak passwords, password reuse, and credential stuffing make them a primary attack vector
+- **Biometrics** — fingerprint, face ID — difficult to steal but cannot be changed if compromised
+- **MFA/2FA** — combines factors. SMS-based 2FA is vulnerable to SIM swapping; authenticator apps (TOTP) and hardware keys (YubiKey) are stronger
+- **Certificate-based** — uses PKI (Public Key Infrastructure) — common in enterprise environments and SSH
+
+**Security relevance:** Authentication weaknesses are among the most commonly exploited entry points. Brute force attacks, credential stuffing, password spraying, and MFA bypass techniques are all staples of penetration testing engagements.
+
+---
+
+## Key Takeaways — Section 3
+
+- Security tools span both offensive and defensive functions — understanding both sides makes you a better practitioner on either
+- SIEM is the nerve centre of defensive security operations — it correlates events across the entire environment
+- Metasploit, Burp Suite, Nmap, and Wireshark are the core pentesting toolkit — know what each does and when to use it
+- InfoSec is a seven-phase continuous process — risk assessment → planning → implementation → monitoring → incident response → disaster recovery → improvement
+- Incident response has six phases — preparation is the most important because you cannot improvise an effective response during an active incident
+- Authentication verifies identity — MFA is the single most impactful control against credential-based attacks
+- SMS-based 2FA is vulnerable to SIM swapping — authenticator apps and hardware keys are the stronger alternatives
