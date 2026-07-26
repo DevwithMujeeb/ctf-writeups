@@ -666,3 +666,134 @@ Routers need to know where to send packets. **Routing protocols** are the mechan
 - OSPF is the dominant enterprise routing protocol — false route injection is a real internal network attack
 - BGP is the routing protocol of the internet — BGP hijacking redirects internet-scale traffic
 - CDP leaks device information to anyone on the segment — disable it on access ports
+
+---
+
+## 13. SNMP — Simple Network Management Protocol
+
+**SNMP** is used to monitor and manage network devices — routers, switches, servers, printers, firewalls. It allows a central management station to query device status, collect performance metrics, and make configuration changes.
+
+**Runs on UDP port 161** (agent) and **UDP port 162** (trap receiver).
+
+### SNMP Versions
+
+| Version     | Security                    | Notes                                 |
+| ----------- | --------------------------- | ------------------------------------- |
+| **SNMPv1**  | None                        | Cleartext community strings           |
+| **SNMPv2c** | None                        | Improved performance, still cleartext |
+| **SNMPv3**  | Authentication + Encryption | Current standard — use this           |
+
+### SNMP Community Strings
+
+In SNMPv1 and v2c, access is controlled by **community strings** — essentially cleartext passwords:
+
+- **`public`** — default read-only community string
+- **`private`** — default read-write community string
+
+These defaults are left unchanged on a vast number of network devices.
+
+**Security relevance:**
+
+- Community string `public` with read access → enumerate device configuration, ARP tables, routing tables, interface details
+- Community string `private` with write access → modify device configuration, change routing, disable interfaces
+- SNMPv1/v2c community strings transmitted in cleartext → capturable by anyone on the network path
+
+```bash
+# Enumerate SNMP with community string "public"
+snmpwalk -v2c -c public <target IP>
+
+# Nmap SNMP scripts
+nmap -sU -p 161 --script snmp-info,snmp-interfaces <target IP>
+```
+
+**SNMP MIB (Management Information Base)** — a hierarchical database of all manageable objects on a device. Each object has an OID (Object Identifier). Querying the MIB can reveal hostnames, running processes, installed software, open ports, and user accounts.
+
+---
+
+## 14. NTP — Network Time Protocol
+
+**NTP** synchronizes clocks across network devices. Runs on **UDP port 123**.
+
+Accurate time is critical for:
+
+- Log correlation across systems — events must be timestamped consistently
+- Kerberos authentication — tickets are time-sensitive (5-minute tolerance)
+- TLS certificate validation — expired or future-dated certificates are rejected
+- Forensic investigations — timeline accuracy depends on synchronized clocks
+
+### NTP Security Relevance
+
+**NTP amplification** — one of the most effective DDoS amplification vectors. A small NTP `monlist` request (a legacy command that returns the last 600 clients) generates a response up to 206x larger. Attacker sends requests with spoofed source IP (victim) → victim receives massive amplified traffic.
+
+**NTP poisoning** — injecting false time into a network can break Kerberos authentication (forcing re-authentication or lockouts), invalidate certificates, and corrupt log timestamps to hinder forensic investigation.
+
+---
+
+## 15. Module Key Takeaways
+
+### The Protocol Is the Attack Surface
+
+Every protocol covered in this module was designed for functionality. Security was added later — or not at all. The pattern across all of them is identical:
+
+| Protocol | Original Assumption                          | Attack That Breaks It             |
+| -------- | -------------------------------------------- | --------------------------------- |
+| ARP      | All devices on the network are trusted       | ARP poisoning / MitM              |
+| DNS      | Resolvers return accurate answers            | DNS poisoning / cache poisoning   |
+| DHCP     | The first server to respond is legitimate    | Rogue DHCP server                 |
+| FTP      | Network is trusted                           | Cleartext credential capture      |
+| SNMP     | Community strings are secret                 | Default string enumeration        |
+| NTP      | Time servers are accurate                    | NTP amplification / poisoning     |
+| SMB      | Windows network is trusted                   | EternalBlue, Pass-the-Hash, Relay |
+| RIP/OSPF | Routing peers are legitimate                 | Route injection                   |
+| BGP      | Autonomous systems announce their own routes | BGP hijacking                     |
+| VTP      | Switches in the domain are legitimate        | Rogue switch VLAN collapse        |
+
+**The lesson:** Trust assumptions baked into protocol design become vulnerabilities in adversarial environments.
+
+### How This Module Maps to the Pentest Process
+
+```
+Reconnaissance
+    └── Port scan (Nmap) → identify open TCP/UDP ports
+    └── Service detection → identify protocol versions
+    └── SNMP walk → device configuration, running services
+    └── DNS enumeration → subdomains, MX, NS records
+    └── SMB enumeration → shares, users, OS version
+
+Exploitation
+    └── FTP anonymous login → file access
+    └── SMB EternalBlue → remote code execution
+    └── SSH brute force → shell access
+    └── SNMP write → device configuration change
+    └── ARP poisoning → MitM, credential capture
+
+Post-Exploitation
+    └── SSH tunnelling → pivot to internal network
+    └── VPN credentials → direct internal access
+    └── Pass-the-Hash via SMB → lateral movement
+    └── DNS poisoning → redirect internal traffic
+```
+
+### Core Principles
+
+- **Encrypt everything in transit** — any cleartext protocol (FTP, HTTP, Telnet, SNMPv1/v2c) is an interception risk on any network segment an attacker can reach
+- **Change defaults** — default community strings, default credentials, default configurations are the first thing an attacker tries
+- **Segment aggressively** — VLANs, subnets, and firewall rules limit what an attacker can reach after initial access. Every unnecessary connection is unnecessary attack surface
+- **Patch and version** — EternalBlue exploited a patched vulnerability. Unpatched systems on a network are the path of least resistance
+- **Monitor protocol behaviour** — anomalous ARP, unexpected DHCP, SNMP from unknown hosts, and unusual DNS queries are all detectable with proper logging and monitoring
+- **Disable what you don't use** — SMBv1, Telnet, FTP, RIPv1, CDP on access ports, SNMP with default strings — if it is not needed, it should not be running
+
+### What Comes Next
+
+With networking fundamentals and protocol knowledge in place, the next module — **Network Enumeration With Nmap** — applies every concept here directly:
+
+- TCP flag manipulation for scan types directly uses TCP knowledge
+- Service and version detection queries the protocols covered here
+- OS fingerprinting uses TCP/IP stack behaviour differences
+- NSE scripts target SMB, SNMP, FTP, HTTP, and DNS specifically
+
+Every Nmap scan is a practical application of everything in this module.
+
+---
+
+_Module completed July 2026 — HackTheBox Academy, Junior Cybersecurity Analyst path_
