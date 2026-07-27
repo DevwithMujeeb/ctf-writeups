@@ -27,16 +27,16 @@ ctf-writeups/
 
 ## Academy Notes
 
-| Module                                                                                    | Status         |
-| ----------------------------------------------------------------------------------------- | -------------- |
-| [Introduction To Information Security](./academy/intro-to-information-security/README.md) | ✅ Completed   |
-| [Network Foundations](./academy/network-foundations/README.md)                            | ✅ Completed   |
-| [Introduction To Networking](./academy/intro-to-networking/README.md)                     | ✅ Completed   |
-| [Linux Fundamentals](./academy/linux-fundamentals/README.md)                              | ✅ Completed   |
-| [Web Requests](./academy/web-requests/README.md)                                          | ✅ Completed   |
-| [Introduction To Web Applications](./academy/intro-to-web-applications/README.md)         | ✅ Completed   |
-| [Introduction To Penetration Testing](./academy/intro-to-penetration-testing/README.md)   | ✅ Completed   |
-| Network Enumeration With Nmap                                                             | 🔄 In Progress |
+| Module                                                                                    | Status       |
+| ----------------------------------------------------------------------------------------- | ------------ |
+| [Introduction To Information Security](./academy/intro-to-information-security/README.md) | ✅ Completed |
+| [Network Foundations](./academy/network-foundations/README.md)                            | ✅ Completed |
+| [Introduction To Networking](./academy/intro-to-networking/README.md)                     | ✅ Completed |
+| [Linux Fundamentals](./academy/linux-fundamentals/README.md)                              | ✅ Completed |
+| [Web Requests](./academy/web-requests/README.md)                                          | ✅ Completed |
+| [Introduction To Web Applications](./academy/intro-to-web-applications/README.md)         | ✅ Completed |
+| [Introduction To Penetration Testing](./academy/intro-to-penetration-testing/README.md)   | ✅ Completed |
+| [Network Enumeration With Nmap](./academy/network-enumeration-with-nmap/README.md)        | ✅ Completed |
 
 ---
 
@@ -54,4 +54,4 @@ Reusable enumeration checklists and approach notes live in the [`methodology/`](
 
 ---
 
-_HackTheBox Academy — Junior Cybersecurity Analyst (CJCA) path | 7/20 modules completed_
+_HackTheBox Academy — Junior Cybersecurity Analyst (CJCA) path | 8/20 modules completed_
