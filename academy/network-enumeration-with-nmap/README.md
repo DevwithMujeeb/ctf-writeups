@@ -775,3 +775,171 @@ ssh -L 8080:192.168.1.10:80 user@<pivot host>
 - Slow timing (`-T0`, `--scan-delay`) blends scan traffic into normal network noise
 - Evasion techniques are cumulative — combining fragmentation, decoys, slow timing, and source port spoofing is more effective than any single technique
 - `proxychains nmap` enables scanning of internal networks through a compromised pivot host — TCP connect scans only
+
+---
+
+## 13. Complete Nmap Reference — Command Cheatsheet
+
+A consolidated reference of every important Nmap flag and use case covered in this module.
+
+### Host Discovery
+
+```bash
+nmap -sn 10.129.2.0/24                    # Ping sweep — find live hosts
+nmap -sn -iL hosts.txt                     # Ping sweep from file
+nmap -Pn 10.129.2.28                       # Skip ping — treat host as alive
+nmap -Pn -n --disable-arp-ping 10.129.2.28 # Disable all host discovery probes
+```
+
+### Port Scanning
+
+```bash
+nmap -sS 10.129.2.28                       # SYN scan (default, requires root)
+nmap -sT 10.129.2.28                       # TCP connect scan (no root needed)
+nmap -sU 10.129.2.28                       # UDP scan
+nmap -p 22,80,443 10.129.2.28             # Specific ports
+nmap -p 1-1000 10.129.2.28                # Port range
+nmap -p- 10.129.2.28                       # All 65535 ports
+nmap --top-ports 100 10.129.2.28           # Top 100 most common ports
+```
+
+### Version and OS Detection
+
+```bash
+nmap -sV 10.129.2.28                       # Service version detection
+nmap -sV --version-intensity 9 10.129.2.28 # Maximum version detection
+nmap -O 10.129.2.28                        # OS detection
+nmap -A 10.129.2.28                        # Aggressive — version + OS + scripts + traceroute
+```
+
+### NSE Scripts
+
+```bash
+nmap -sC 10.129.2.28                       # Default scripts
+nmap --script=banner 10.129.2.28           # Specific script
+nmap --script=vuln 10.129.2.28             # Vulnerability scripts
+nmap --script=smb-vuln-ms17-010 10.129.2.28 # EternalBlue check
+nmap --script=http-enum 10.129.2.28        # HTTP directory enumeration
+```
+
+### Output
+
+```bash
+nmap 10.129.2.28 -oN output.txt            # Normal
+nmap 10.129.2.28 -oG output.gnmap          # Grepable
+nmap 10.129.2.28 -oX output.xml            # XML
+nmap 10.129.2.28 -oA output               # All formats
+```
+
+### Timing and Performance
+
+```bash
+nmap 10.129.2.28 -T4                       # Aggressive timing
+nmap 10.129.2.28 -T1                       # Sneaky timing
+nmap 10.129.2.28 --min-rate 5000           # Minimum packet rate
+nmap 10.129.2.28 --max-retries 2           # Limit retries
+nmap 10.129.2.28 --stats-every=5s         # Progress updates
+```
+
+### Evasion
+
+```bash
+nmap 10.129.2.28 -f                        # Fragment packets
+nmap 10.129.2.28 -D RND:10                 # 10 random decoys
+nmap 10.129.2.28 --source-port 53          # Spoof source port
+nmap 10.129.2.28 -T0 --scan-delay 5s      # Slow and low
+nmap 10.129.2.28 -n                        # No DNS resolution
+```
+
+### Standard Workflow Commands
+
+**Quick initial scan — find open ports fast:**
+
+```bash
+sudo nmap 10.129.2.28 -p- --min-rate 5000 -oA initial
+```
+
+**Targeted scan on discovered ports:**
+
+```bash
+sudo nmap 10.129.2.28 -p 22,80,445 -sV -sC -oA targeted
+```
+
+**Full comprehensive scan:**
+
+```bash
+sudo nmap 10.129.2.28 -p- -sV -sC -O -T4 --min-rate 3000 -oA full
+```
+
+**UDP scan for common services:**
+
+```bash
+sudo nmap 10.129.2.28 -sU -p 53,161,123,500 -sV -oA udp
+```
+
+---
+
+## 14. Module Key Takeaways
+
+### Nmap Is a Methodology, Not Just a Tool
+
+The mistake beginners make is running one Nmap scan and moving on. Professional enumeration is iterative:
+
+1. **Initial discovery** — find live hosts and open ports fast (`-p- --min-rate 5000`)
+2. **Targeted enumeration** — run version detection and scripts against discovered ports
+3. **Service-specific enumeration** — use NSE scripts tailored to each discovered service
+4. **Documentation** — save all results with `-oA`, review before moving to exploitation
+
+Each iteration reveals more detail. A port that returned no version on the first scan may reveal a version with `--version-intensity 9`.
+
+### The Enumeration Mindset
+
+**Never assume.** A web server on port 8080 is not necessarily the same as one on port 80. A closed port now might be open in five minutes. A filtered port might be reachable from a different source IP or port.
+
+Questions to ask after every Nmap scan:
+
+- Are there services running on non-standard ports?
+- Do any version numbers map to known CVEs?
+- Are there services I haven't enumerated with specific scripts yet?
+- Have I scanned UDP as well as TCP?
+- Are there hosts that didn't respond to ping but might respond to TCP probes?
+
+### How Nmap Feeds Every Other Tool
+
+```
+Nmap discovers open ports and services
+        │
+        ├── Port 21 (FTP)    → ftp, hydra, searchsploit vsftpd
+        ├── Port 22 (SSH)    → ssh, hydra, searchsploit openssh
+        ├── Port 80/443      → gobuster, nikto, burpsuite, curl
+        ├── Port 445 (SMB)   → smbclient, enum4linux, metasploit
+        ├── Port 3306 (MySQL)→ mysql client, sqlmap
+        ├── Port 3389 (RDP)  → xfreerdp, hydra, metasploit
+        └── Unknown ports    → nc, curl, browser — manual investigation
+```
+
+Every tool in the penetration testing toolkit starts from Nmap output. Nmap is not just a scanner — it is the map that every subsequent tool navigates by.
+
+### Core Principles
+
+- **Scan twice, exploit once** — thorough enumeration before exploitation saves time and avoids missed attack surfaces
+- **Save everything** — `-oA` on every scan, annotate results as you go
+- **Stealth is contextual** — in CTF environments, speed matters; in professional engagements, detection avoidance matters
+- **UDP is not optional** — DNS, SNMP, and NTP are critical services that only appear in UDP scans
+- **Version numbers are attack surface** — every service version is a potential CVE waiting to be searched
+- **NSE scripts are enumeration accelerators** — they do in seconds what manual enumeration takes minutes
+
+### What Comes Next
+
+With Nmap mastery established, every subsequent module and machine writeup applies these skills directly:
+
+- **HTB Machines** — every machine starts with an Nmap scan. The discovered services define the attack path
+- **Footprinting module** — deeper enumeration of specific services (FTP, SMB, NFS, SMTP, IMAP, RDP, WinRM)
+- **Active Directory** — Nmap discovers domain controllers, identifies AD-specific ports (88, 389, 636)
+- **Web application testing** — HTTP ports discovered by Nmap become targets for Burp Suite and gobuster
+
+The methodology never changes. The output of Nmap shapes everything that follows.
+
+---
+
+_Module completed July 2026 — HackTheBox Academy, Junior Cybersecurity Analyst path_
